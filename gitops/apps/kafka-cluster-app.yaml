@@ -1,7 +1,7 @@
-# WHY: Deliberately separated from the operator app so that
-# sync-wave ordering is enforced. If both were in the same app,
-# ArgoCD might try to create the Kafka CR before the CRD exists,
-# causing a sync failure on first install.
+# WHY: kafka-cluster-app manages ONLY your Kafka CR and KafkaTopics.
+# The Strimzi operator manages its own RoleBindings dynamically —
+# we explicitly ignore them here so ArgoCD does not flag them as
+# conflicts between the operator app and this app.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -18,6 +18,27 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: nii-kafka
+  ignoreDifferences:
+    # WHY: Strimzi operator dynamically updates these RoleBindings
+    # as part of its reconciliation loop. If we track them here,
+    # ArgoCD will endlessly show OutOfSync. We let the operator
+    # own them fully and ignore them in this app.
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      name: strimzi-cluster-operator
+      namespace: nii-kafka
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      name: strimzi-cluster-operator-entity-operator-delegation
+      namespace: nii-kafka
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      name: strimzi-cluster-operator-leader-election
+      namespace: nii-kafka
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      name: strimzi-cluster-operator-watched
+      namespace: nii-kafka
   syncPolicy:
     automated:
       prune: true
