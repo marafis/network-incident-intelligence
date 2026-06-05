@@ -28,20 +28,9 @@ spec:
   ignoreDifferences:
     - group: rbac.authorization.k8s.io
       kind: RoleBinding
-      name: strimzi-cluster-operator
-      namespace: nii-kafka
-    - group: rbac.authorization.k8s.io
-      kind: RoleBinding
-      name: strimzi-cluster-operator-entity-operator-delegation
-      namespace: nii-kafka
-    - group: rbac.authorization.k8s.io
-      kind: RoleBinding
-      name: strimzi-cluster-operator-leader-election
-      namespace: nii-kafka
-    - group: rbac.authorization.k8s.io
-      kind: RoleBinding
-      name: strimzi-cluster-operator-watched
-      namespace: nii-kafka
+      jsonPointers:
+        - /subjects
+        - /roleRef
   syncPolicy:
     automated:
       prune: true
