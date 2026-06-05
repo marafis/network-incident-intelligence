@@ -1,3 +1,11 @@
+# WHY: Declaring topics as Kubernetes custom resources (KafkaTopic)
+# rather than creating them via CLI means topics are version-controlled,
+# reproducible, and managed by the entity operator automatically.
+# network-alerts is the primary topic — all simulated telecom
+# alarm events flow through this topic from alert-simulator
+# to alert-consumer.
+# 3 partitions allows parallel consumption by up to 3 consumer
+# instances later when we scale the alert-consumer service.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -5,9 +13,47 @@ metadata:
   namespace: nii-kafka
   labels:
     strimzi.io/cluster: nii-kafka-cluster
+    app.kubernetes.io/part-of: network-incident-intelligence
 spec:
   partitions: 3
   replicas: 1
   config:
-    retention.ms: 604800000    # 7 days
-    segment.bytes: 107374182   # 100MB
+    # WHY: 7-day retention gives enough history for the RAG service
+    # to pull recent incident context during retrieval.
+    retention.ms: "604800000"
+    segment.bytes: "107374182"
+---
+# WHY: Separate topic for incidents that have been processed and
+# enriched by the incident-agent. Downstream consumers (dashboards,
+# notification systems) subscribe here rather than to raw alerts.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: processed-incidents
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka-cluster
+    app.kubernetes.io/part-of: network-incident-intelligence
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    segment.bytes: "107374182"
+---
+# WHY: Dead letter topic for alerts that failed processing —
+# either LLM timeout, unparseable payload, or confidence below
+# minimum threshold. Critical for observability and reprocessing.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: alerts-dead-letter
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka-cluster
+    app.kubernetes.io/part-of: network-incident-intelligence
+spec:
+  partitions: 1
+  replicas: 1
+  config:
+    retention.ms: "2592000000"   # 30 days — keep failures longer for analysis

@@ -1,3 +1,10 @@
+# WHY: kafka-app installs the Strimzi OPERATOR only via Helm chart.
+# The operator itself creates all its own RBAC, CRDs, and service accounts.
+# We must NEVER manually create those resources — that is the exact
+# cause of the duplication error you hit.
+# sync-wave: "2" ensures this runs after cert-manager and ingress
+# are healthy (wave 0 and 1). The kafka-cluster-app sits at wave 3
+# so the CRDs exist before we try to create a Kafka resource.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -32,3 +39,5 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      # WHY: ServerSideApply is required for Strimzi — its CRDs exceed
+      # the 256KB annotation limit that client-side apply enforces.

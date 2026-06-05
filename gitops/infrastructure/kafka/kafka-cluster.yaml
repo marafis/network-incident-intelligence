@@ -1,3 +1,9 @@
+# WHY: Single-replica Kafka with KRaft mode is not yet stable in
+# Strimzi 0.45 for production, so we use the classic
+# Zookeeper mode. replication factor 1 throughout because we
+# have one broker — this is a learning environment, not HA.
+# nodeSelector pins ALL Kafka pods to Server 2 (workload-type=heavy)
+# to keep the control plane node free.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
@@ -17,11 +23,11 @@ spec:
         type: internal
         tls: true
     config:
-      offsets.topic.replication.factor: 1
-      transaction.state.log.replication.factor: 1
-      transaction.state.log.min.isr: 1
-      default.replication.factor: 1
-      min.insync.replicas: 1
+      offsets.topic.replication.factor: "1"
+      transaction.state.log.replication.factor: "1"
+      transaction.state.log.min.isr: "1"
+      default.replication.factor: "1"
+      min.insync.replicas: "1"
     template:
       pod:
         nodeSelector:
@@ -57,6 +63,9 @@ spec:
       class: local-path
       deleteClaim: false
   entityOperator:
+    # WHY: entityOperator manages KafkaTopic and KafkaUser
+    # custom resources inside the cluster. Without it, applying
+    # kafka-topics.yaml would have no controller to act on it.
     topicOperator:
       resources:
         requests:
