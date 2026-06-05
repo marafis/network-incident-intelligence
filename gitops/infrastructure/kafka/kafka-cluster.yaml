@@ -6,11 +6,9 @@ metadata:
 spec:
   kafka:
     version: 3.7.0
-    replicas: 3
+    replicas: 1   # IMPORTANT for your infra
 
-    # KRaft mode (NO Zookeeper)
-    kraft:
-      clusterId: "generated-or-fixed-cluster-id"
+    kraft: {}     # correct Strimzi KRaft mode
 
     listeners:
       - name: internal
@@ -23,18 +21,18 @@ spec:
         tls: true
 
     config:
-      offsets.topic.replication.factor: 3
-      transaction.state.log.replication.factor: 3
-      transaction.state.log.min.isr: 2
-      default.replication.factor: 3
-      min.insync.replicas: 2
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
 
     storage:
       type: persistent-claim
-      size: 50Gi
+      size: 10Gi
       class: local-path
+      deleteClaim: false
 
-  # REQUIRED in KRaft mode: no zookeeper block at all
   entityOperator:
     topicOperator: {}
     userOperator: {}
