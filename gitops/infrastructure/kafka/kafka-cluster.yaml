@@ -1,10 +1,14 @@
-# WHY: Strimzi 0.43.0 + Kafka 3.7.0 on single-broker Zookeeper mode.
-# affinity.nodeAffinity is used instead of nodeSelector because
+# WHY: Single-broker Kafka 3.7.0 on Zookeeper mode.
+# Strimzi 0.43.0 supports Kafka 3.7.0 — pinned explicitly so
+# the operator never auto-upgrades and breaks the cluster.
+# All replication factors = 1 because we have one broker only.
+# Setting them higher would cause under-replicated partition alerts.
+#
+# affinity.nodeAffinity instead of nodeSelector:
 # Strimzi's CRD schema does not expose nodeSelector directly under
-# template.pod — it uses the full Kubernetes affinity API instead.
-# requiredDuringSchedulingIgnoredDuringExecution ensures pods ONLY
-# schedule on Server 2 (workload-type=heavy) and never on the
-# control plane node, keeping ArgoCD and ingress stable.
+# template.pod — it uses the full Kubernetes affinity API.
+# requiredDuringScheduling means pods NEVER schedule on control
+# plane — keeps Server 1 free for ArgoCD, ingress, cert-manager.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
@@ -78,9 +82,10 @@ spec:
       class: local-path
       deleteClaim: false
   entityOperator:
-    # WHY: topicOperator watches KafkaTopic CRs and reconciles
-    # them into actual Kafka topics inside the broker.
-    # Without it, our kafka-topics.yaml manifests are ignored.
+    # WHY: topicOperator watches KafkaTopic CRs and reconciles them
+    # into real Kafka topics inside the broker. Without it, applying
+    # kafka-topics.yaml would have no controller to act on it —
+    # the topics would be created in Kubernetes but never in Kafka.
     topicOperator:
       resources:
         requests:

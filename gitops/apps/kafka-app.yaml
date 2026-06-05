@@ -1,9 +1,11 @@
-# WHY: Strimzi 0.45.0 has a known incompatibility with ArgoCD
-# ServerSideApply causing the ServiceAccount to not be created
-# before the operator Deployment starts — resulting in a
-# CrashLoopBackOff. Version 0.43.0 is stable with ArgoCD GitOps
-# and supports Kafka 3.7.x on single-broker Zookeeper mode,
-# which is correct for our resource-constrained single-node setup.
+# WHY: Installs the Strimzi OPERATOR ONLY via official Helm chart.
+# The operator creates all its own RBAC, CRDs, ServiceAccounts.
+# We must never manually create those — that causes the duplicate
+# ownership errors we hit earlier.
+# sync-wave "2" — runs after base infrastructure (wave 0/1) but
+# before the Kafka cluster (wave 3) so CRDs exist first.
+# ServerSideApply required — Strimzi CRDs exceed the 256KB
+# annotation limit that client-side apply enforces.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

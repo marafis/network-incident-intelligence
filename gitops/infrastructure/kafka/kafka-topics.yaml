@@ -1,11 +1,20 @@
-# WHY: Declaring topics as Kubernetes custom resources (KafkaTopic)
-# rather than creating them via CLI means topics are version-controlled,
-# reproducible, and managed by the entity operator automatically.
-# network-alerts is the primary topic — all simulated telecom
-# alarm events flow through this topic from alert-simulator
-# to alert-consumer.
-# 3 partitions allows parallel consumption by up to 3 consumer
-# instances later when we scale the alert-consumer service.
+# WHY: KafkaTopic CRs are version-controlled topic definitions.
+# The entityOperator's topicOperator reconciles these into real
+# Kafka topics automatically — no CLI commands needed ever.
+#
+# network-alerts: primary inbound topic. All telecom alarm events
+# produced by alert-simulator land here. 3 partitions = up to 3
+# alert-consumer instances can process in parallel later.
+#
+# processed-incidents: output topic. incident-agent publishes
+# enriched, LLM-classified incidents here. Downstream systems
+# (dashboards, notifications) subscribe to this, not raw alerts —
+# clean separation between raw ingestion and processed output.
+#
+# alerts-dead-letter: safety net. Any alert that fails processing
+# (LLM timeout, unparseable payload, confidence below threshold)
+# is published here instead of being lost. 30-day retention
+# gives time to investigate and reprocess failures.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -18,14 +27,9 @@ spec:
   partitions: 3
   replicas: 1
   config:
-    # WHY: 7-day retention gives enough history for the RAG service
-    # to pull recent incident context during retrieval.
     retention.ms: "604800000"
     segment.bytes: "107374182"
 ---
-# WHY: Separate topic for incidents that have been processed and
-# enriched by the incident-agent. Downstream consumers (dashboards,
-# notification systems) subscribe here rather than to raw alerts.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -41,9 +45,6 @@ spec:
     retention.ms: "604800000"
     segment.bytes: "107374182"
 ---
-# WHY: Dead letter topic for alerts that failed processing —
-# either LLM timeout, unparseable payload, or confidence below
-# minimum threshold. Critical for observability and reprocessing.
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -56,4 +57,4 @@ spec:
   partitions: 1
   replicas: 1
   config:
-    retention.ms: "2592000000"   # 30 days — keep failures longer for analysis
+    retention.ms: "2592000000"
