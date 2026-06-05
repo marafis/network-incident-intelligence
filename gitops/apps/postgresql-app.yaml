@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-postgresql
+  namespace: argocd
+  annotations:
+      argocd.argoproj.io/sync-wave: "0"
+
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure/postgres
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii-infrastructure
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
