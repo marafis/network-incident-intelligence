@@ -1,10 +1,9 @@
-# WHY: kafka-app installs the Strimzi OPERATOR only via Helm chart.
-# The operator itself creates all its own RBAC, CRDs, and service accounts.
-# We must NEVER manually create those resources — that is the exact
-# cause of the duplication error you hit.
-# sync-wave: "2" ensures this runs after cert-manager and ingress
-# are healthy (wave 0 and 1). The kafka-cluster-app sits at wave 3
-# so the CRDs exist before we try to create a Kafka resource.
+# WHY: Strimzi 0.45.0 has a known incompatibility with ArgoCD
+# ServerSideApply causing the ServiceAccount to not be created
+# before the operator Deployment starts — resulting in a
+# CrashLoopBackOff. Version 0.43.0 is stable with ArgoCD GitOps
+# and supports Kafka 3.7.x on single-broker Zookeeper mode,
+# which is correct for our resource-constrained single-node setup.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -17,7 +16,7 @@ spec:
   source:
     repoURL: https://strimzi.io/charts/
     chart: strimzi-kafka-operator
-    targetRevision: 0.45.0
+    targetRevision: 0.43.0
     helm:
       values: |
         watchNamespaces:
@@ -39,5 +38,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      # WHY: ServerSideApply is required for Strimzi — its CRDs exceed
-      # the 256KB annotation limit that client-side apply enforces.
