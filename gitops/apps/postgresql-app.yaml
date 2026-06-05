@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
-    path: gitops/infrastructure/postgres
+    path: gitops/infrastructure/postgresql
   destination:
     server: https://kubernetes.default.svc
     namespace: nii-infrastructure
