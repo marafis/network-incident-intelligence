@@ -20,10 +20,10 @@ kind: Kafka
 metadata:
   name: nii-kafka
   namespace: nii-kafka
-  labels:
-    strimzi.io/cluster: nii-kafka
   annotations:
     argocd.argoproj.io/sync-wave: "2"
+  labels:
+    strimzi.io/cluster: nii-kafka
 spec:
   kafka:
     version: 3.9.0
