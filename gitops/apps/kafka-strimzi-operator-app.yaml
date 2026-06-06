@@ -19,6 +19,8 @@ spec:
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
             value: "1.30"  
+          - name: STRIMZI_FEATURE_GATES
+            value: "+UseKRaft,+UseStrimziPodSets"        
         resources:
           requests:
             memory: "256Mi"
