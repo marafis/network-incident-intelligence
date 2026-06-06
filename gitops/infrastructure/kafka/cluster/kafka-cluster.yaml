@@ -3,6 +3,8 @@ kind: Kafka
 metadata:
   name: nii-kafka-cluster
   namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka-cluster
   annotations:
     strimzi.io/kraft: enabled
     strimzi.io/node-pools: enabled
