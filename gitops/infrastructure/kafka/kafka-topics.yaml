@@ -1,0 +1,32 @@
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: telemetry-events
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka
+spec:
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: incidents
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka
+spec:
+  partitions: 3
+  replicas: 1
+---
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: alerts
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka
+spec:
+  partitions: 2
+  replicas: 1
