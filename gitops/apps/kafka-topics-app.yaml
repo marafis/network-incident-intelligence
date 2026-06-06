@@ -1,0 +1,41 @@
+# WHY: Topics live in their own ArgoCD app separate from the cluster.
+# The Strimzi topicOperator continuously reconciles KafkaTopic resources
+# and writes operator-managed fields back to the spec. This causes ArgoCD
+# to detect drift and loop endlessly if topics share an app with the
+# cluster CR. Isolating topics here means:
+# 1. Cluster app stays Green/Synced cleanly
+# 2. Topic drift is contained and ignoreable
+# 3. Adding/removing topics never risks touching cluster config
+#
+# ignoreDifferences on spec — the topicOperator rewrites these fields
+# after every reconcile. We tell ArgoCD to ignore them so the app
+# stays Synced even when the operator modifies the live resource.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-kafka-topics
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure/kafka/topics
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii-kafka
+  ignoreDifferences:
+    - group: kafka.strimzi.io
+      kind: KafkaTopic
+      jsonPointers:
+        - /spec/partitions
+        - /spec/replicas
+        - /metadata/annotations
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
