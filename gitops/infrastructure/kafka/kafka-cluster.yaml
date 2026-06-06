@@ -3,6 +3,9 @@ kind: Kafka
 metadata:
   name: nii-kafka-cluster
   namespace: nii-infrastructure
+  annotations:
+    strimzi.io/node-pools: "enabled"    # Tells the operator to look for KafkaNodePools
+    strimzi.io/kraft: "enabled"         # Configures the cluster for ZooKeeper-less KRaft mode
 spec:
   kafka:
     version: 4.2.0                      # Strimzi 1.0.0 native version alignment
