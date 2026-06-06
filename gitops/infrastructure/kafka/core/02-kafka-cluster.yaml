@@ -19,6 +19,7 @@ metadata:
 spec:
   kafka:
     version: 3.9.0
+    metadataVersion: 3.9-IV0 # This is mandatory for KRaft/1.0.0
     listeners:
       - name: plain
         port: 9092
