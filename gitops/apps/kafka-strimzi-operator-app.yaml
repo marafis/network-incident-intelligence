@@ -15,7 +15,6 @@ spec:
       values: |
         watchNamespaces:
           - nii-kafka
-          - strimzi-system
         featureGates: "+UseKRaft,+UseStrimziPodSets"
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
