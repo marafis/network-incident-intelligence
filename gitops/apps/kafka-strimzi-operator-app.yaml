@@ -17,7 +17,7 @@ spec:
           - nii-kafka
         extraEnvs:
           - name: STRIMZI_KAFKA_IMAGES
-          value: "3.9.0=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0"
+            value: "3.9.0=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0"
           - name: STRIMZI_KUBERNETES_VERSION
             value: "1.30"  
         resources:
