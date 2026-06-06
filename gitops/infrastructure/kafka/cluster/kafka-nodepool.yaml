@@ -18,3 +18,22 @@ spec:
         type: persistent-claim
         size: 10Gi
         class: local-path
+        deleteClaim: false
+  template:
+    pod:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values:
+                      - heavy
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "768Mi"
+      cpu: "500m"
