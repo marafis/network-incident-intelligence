@@ -5,6 +5,8 @@ metadata:
   namespace: nii-kafka
   labels:
     strimzi.io/cluster: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: 1
   roles:
@@ -17,6 +19,8 @@ apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   kafka:
     version: 3.9.0
