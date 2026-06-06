@@ -3,6 +3,8 @@ kind: KafkaTopic
 metadata:
   name: telemetry-events
   namespace: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
     strimzi.io/cluster: nii-kafka
 spec:
@@ -14,6 +16,8 @@ kind: KafkaTopic
 metadata:
   name: incidents
   namespace: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
     strimzi.io/cluster: nii-kafka
 spec:
@@ -25,6 +29,8 @@ kind: KafkaTopic
 metadata:
   name: alerts
   namespace: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
     strimzi.io/cluster: nii-kafka
 spec:

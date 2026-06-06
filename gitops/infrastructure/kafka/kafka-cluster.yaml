@@ -3,6 +3,9 @@ kind: Kafka
 metadata:
   name: nii-kafka
   namespace: nii-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+
 spec:
   kafka:
     replicas: 1
