@@ -1,17 +1,3 @@
-# WHY: Strimzi 1.0.0 — first stable major release. KRaft-only,
-# Zookeeper support fully removed. Deployed into nii-kafka namespace
-# — same namespace as the Kafka cluster it manages.
-#
-# Deploying operator and Kafka in the same namespace is the correct
-# architecture for a single-cluster setup. It eliminates cross-namespace
-# DNS resolution failures that caused the infinite rolling restart loop
-# (operator could not resolve bootstrap service across namespaces).
-#
-# sync-wave "2" — runs after base infrastructure but before Kafka CRDs
-# are needed. The operator installs the CRDs as part of its Helm chart.
-#
-# ApplyOutOfSyncOnly — only applies changed resources, reducing
-# unnecessary API server load on a constrained single-node setup.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -27,20 +13,20 @@ spec:
     targetRevision: 1.0.0
     helm:
       valuesObject:
-        # WHY: operator watches its own namespace by default in 1.0.0.
-        # No watchNamespaces needed — operator and Kafka share nii-kafka.
+        # WHY: operationTimeoutMs is a native Helm value in Strimzi 1.0.0
+        # that maps to STRIMZI_OPERATION_TIMEOUT_MS env var automatically.
+        # Setting it via extraEnvs as well causes a duplicate key error
+        # that breaks ArgoCD's structured merge diff entirely.
+        # 600000ms = 10 minutes — gives KRaft leader election enough time
+        # on resource-constrained hardware before the operator concludes
+        # the broker is unreachable and triggers a pod restart.
+        operationTimeoutMs: 600000
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
             value: "major=1, minor=30"
-          # WHY: K3s 1.35 returns non-standard fields (emulationMajor,
-          # minCompatibilityMajor) in its version API response that
-          # Strimzi's parser cannot handle. We provide the version
-          # explicitly in the map format Strimzi expects.
-          - name: STRIMZI_OPERATION_TIMEOUT_MS
-            value: "600000"
-          # WHY: 10 minute timeout gives KRaft leader election enough
-          # time on resource-constrained hardware before the operator
-          # decides the broker is unresponsive.
+            # WHY: K3s 1.35 returns non-standard fields in its version API
+            # response that Strimzi's parser cannot handle. We provide the
+            # version explicitly in the exact map format Strimzi expects.
         resources:
           requests:
             memory: "256Mi"
