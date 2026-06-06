@@ -20,7 +20,16 @@ spec:
       jsonPointers:
         - /subjects
         - /roleRef
+    - group: kafka.strimzi.io
+      kind: KafkaNodePool
+      jsonPointers:
+        - /metadata/annotations
+        - /spec/storage/volumes
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
