@@ -1,0 +1,56 @@
+# WHY: KafkaNodePool is the KRaft replacement for the broker and
+# zookeeper specs that existed in Zookeeper mode. Pool identity
+# comes from metadata.name + strimzi.io/cluster label only —
+# no nodePoolId field (that field does not exist in the CRD schema).
+#
+# dual-role means this node acts as both broker (handles producer
+# and consumer connections on port 9092) and controller (handles
+# KRaft metadata and leader election on port 9091). Correct for a
+# single-node learning cluster. In production you separate these
+# roles across dedicated node pools for fault isolation.
+#
+# JBOD storage (Just a Bunch of Disks) is required for KRaft mode.
+# deleteClaim: false protects data if the pod or StatefulSet is
+# deleted — the PVC and its data survive independently.
+#
+# affinity pins Kafka pods to Server 2 (workload-type=heavy),
+# keeping the control plane node free for ArgoCD and ingress.
+# requiredDuringScheduling means pods NEVER land on Server 1.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: nii-kafka
+  labels:
+    strimzi.io/cluster: nii-kafka-cluster
+spec:
+  replicas: 1
+  roles:
+    - broker
+    - controller
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 10Gi
+        class: local-path
+        deleteClaim: false
+  template:
+    pod:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values:
+                      - heavy
+  resources:
+    requests:
+      memory: "768Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"

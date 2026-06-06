@@ -1,0 +1,53 @@
+# WHY: Separate app from the operator — sync-wave "3" ensures
+# kafka.strimzi.io CRDs exist before we try to create Kafka
+# and KafkaNodePool resources. If merged into one app, ArgoCD
+# applies resources in undefined order and the Kafka CR creation
+# fails because its CRD doesn't exist yet.
+#
+# ignoreDifferences — Strimzi operator writes back to these fields
+# after every reconciliation cycle. Without ignoring them ArgoCD
+# perpetually shows OutOfSync and attempts to revert operator-managed
+# state, causing conflicts:
+#
+# KafkaNodePool /metadata/annotations — operator adds internal
+# reconciliation state annotations dynamically.
+#
+# KafkaNodePool /spec/storage/volumes — operator may rewrite
+# volume configuration after initial provisioning.
+#
+# RoleBinding /subjects — operator updates service account
+# references dynamically as part of its RBAC management.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-kafka-cluster
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure/kafka/cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii-kafka
+  ignoreDifferences:
+    - group: kafka.strimzi.io
+      kind: KafkaNodePool
+      jsonPointers:
+        - /metadata/annotations
+        - /spec/storage/volumes
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      jsonPointers:
+        - /subjects
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true

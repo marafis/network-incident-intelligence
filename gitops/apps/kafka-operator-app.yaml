@@ -1,0 +1,61 @@
+# WHY: Strimzi 1.0.0 — first stable major release. KRaft-only,
+# Zookeeper support fully removed. Deployed into nii-kafka namespace
+# — same namespace as the Kafka cluster it manages.
+#
+# Deploying operator and Kafka in the same namespace is the correct
+# architecture for a single-cluster setup. It eliminates cross-namespace
+# DNS resolution failures that caused the infinite rolling restart loop
+# (operator could not resolve bootstrap service across namespaces).
+#
+# sync-wave "2" — runs after base infrastructure but before Kafka CRDs
+# are needed. The operator installs the CRDs as part of its Helm chart.
+#
+# ApplyOutOfSyncOnly — only applies changed resources, reducing
+# unnecessary API server load on a constrained single-node setup.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-strimzi-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://strimzi.io/charts/
+    chart: strimzi-kafka-operator
+    targetRevision: 1.0.0
+    helm:
+      valuesObject:
+        # WHY: operator watches its own namespace by default in 1.0.0.
+        # No watchNamespaces needed — operator and Kafka share nii-kafka.
+        extraEnvs:
+          - name: STRIMZI_KUBERNETES_VERSION
+            value: "major=1, minor=30"
+          # WHY: K3s 1.35 returns non-standard fields (emulationMajor,
+          # minCompatibilityMajor) in its version API response that
+          # Strimzi's parser cannot handle. We provide the version
+          # explicitly in the map format Strimzi expects.
+          - name: STRIMZI_OPERATION_TIMEOUT_MS
+            value: "600000"
+          # WHY: 10 minute timeout gives KRaft leader election enough
+          # time on resource-constrained hardware before the operator
+          # decides the broker is unresponsive.
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "384Mi"
+            cpu: "500m"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii-kafka
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true

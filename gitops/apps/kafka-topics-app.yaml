@@ -1,0 +1,39 @@
+# WHY: Topics in their own app at sync-wave "4" — after the cluster
+# is healthy and entityOperator is running. The entityOperator's
+# topicOperator is what reconciles KafkaTopic CRs into real Kafka
+# topics. Without it running, topic CRs are silently ignored.
+#
+# ignoreDifferences on KafkaTopic spec — the topicOperator rewrites
+# partition and replica counts after reconciliation. Ignoring these
+# prevents the perpetual OutOfSync loop seen earlier where ArgoCD
+# and the topicOperator fought over the same fields endlessly.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-kafka-topics
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure/kafka/topics
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii-kafka
+  ignoreDifferences:
+    - group: kafka.strimzi.io
+      kind: KafkaTopic
+      jsonPointers:
+        - /spec/partitions
+        - /spec/replicas
+        - /metadata/annotations
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
