@@ -13,8 +13,6 @@ spec:
     targetRevision: 0.45.0
     helm:
       valuesObject:
-        watchNamespaces:
-          - "*"  # Watch all namespaces
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
             value: "1.30"
