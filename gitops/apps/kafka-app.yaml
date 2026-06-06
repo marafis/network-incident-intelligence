@@ -4,6 +4,7 @@ metadata:
   name: nii-kafka
   namespace: argocd
 spec:
+  project: default
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
