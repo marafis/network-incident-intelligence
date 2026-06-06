@@ -1,14 +1,3 @@
-# WHY: Deploys the Kafka cluster CR and topics — SEPARATE from the
-# operator app deliberately. sync-wave "3" ensures this runs only
-# after the operator (wave 2) is healthy and CRDs exist.
-# If both were in one app, ArgoCD would try to create the Kafka CR
-# before kafka.strimzi.io/v1beta2 CRD exists — instant sync failure.
-#
-# ignoreDifferences on RoleBindings:
-# Strimzi operator dynamically reconciles these RoleBindings as part
-# of its internal loop. If we track them here too, ArgoCD endlessly
-# shows OutOfSync and reports duplicate ownership. We explicitly
-# tell ArgoCD to ignore them — the operator owns them fully.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
