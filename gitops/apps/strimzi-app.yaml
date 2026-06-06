@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nii-kafka
+  name: strimzi-operator
   namespace: argocd
 spec:
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
-    path: gitops/infrastructure/kafka/core
+    path: gitops/infrastructure/kafka/strimzi
   destination:
     server: https://kubernetes.default.svc
-    namespace: nii-kafka
+    namespace: strimzi-kafka-operator
   syncPolicy:
     automated:
       prune: true
