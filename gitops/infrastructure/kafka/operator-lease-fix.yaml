@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: strimzi-cluster-operator-leases-fix
-  namespace: kafka
+  namespace: kafka # <--- Explicitly forces it into the operator's namespace
 rules:
   - apiGroups:
       - coordination.k8s.io
@@ -21,7 +21,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: strimzi-cluster-operator-leases-fix
-  namespace: kafka
+  namespace: kafka # <--- Explicitly forces it into the operator's namespace
 subjects:
   - kind: ServiceAccount
     name: strimzi-cluster-operator
