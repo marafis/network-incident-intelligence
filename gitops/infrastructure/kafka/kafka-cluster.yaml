@@ -6,9 +6,7 @@ metadata:
 spec:
   kafka:
     version: 3.7.0
-    replicas: 1   # IMPORTANT for your infra
-
-    kraft: {}     # correct Strimzi KRaft mode
+    replicas: 1
 
     listeners:
       - name: internal
@@ -30,6 +28,14 @@ spec:
     storage:
       type: persistent-claim
       size: 10Gi
+      class: local-path
+      deleteClaim: false
+
+  zookeeper:
+    replicas: 1
+    storage:
+      type: persistent-claim
+      size: 5Gi
       class: local-path
       deleteClaim: false
 
