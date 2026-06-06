@@ -1,0 +1,30 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: main-pool
+  namespace: nii-infrastructure
+  labels:
+    strimzi.io/cluster: nii-kafka
+spec:
+  replicas: 1
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 10Gi
+    class: local-path
+    deleteClaim: false
+  kraftMetadata: shared
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: "250m"
+    limits:
+      memory: 2Gi
+      cpu: "500m"
+  template:
+    pod:
+      spec:
+        nodeSelector:
+          workload-type: heavy          # Pins Kafka securely alongside PostgreSQL

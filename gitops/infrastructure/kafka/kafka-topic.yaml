@@ -1,0 +1,13 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: network-incidents
+  namespace: nii-infrastructure
+  labels:
+    strimzi.io/cluster: nii-kafka       # Ties the topic directly to your cluster instance
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: 604800000             # 7 days retention
+    segment.bytes: 1073741824           # 1 GB segment size

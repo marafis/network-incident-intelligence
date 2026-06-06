@@ -1,0 +1,27 @@
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: nii-kafka
+  namespace: nii-infrastructure
+spec:
+  kafka:
+    version: 4.2.0                      # Strimzi 1.0.0 native version alignment
+    metadataVersion: 4.2-IV1
+    listeners:
+      - name: plain                     # Unencrypted internal cluster access
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls                       # Secure internal cluster access
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+  entityOperator:                       # Deploys safe sidecars for managing users and topics natively
+    topicOperator: {}
+    userOperator: {}
