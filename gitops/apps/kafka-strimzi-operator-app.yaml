@@ -12,12 +12,12 @@ spec:
     chart: strimzi-kafka-operator
     targetRevision: 0.45.0
     helm:
-      values: |
+      valuesObject:
         watchNamespaces:
           - "*"  # Watch all namespaces
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
-            value: "1.30"  
+            value: "1.30"
         resources:
           requests:
             memory: "256Mi"
