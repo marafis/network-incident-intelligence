@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-operator-infra
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure/kafka-operator # Create this folder for operator-specific RBAC
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kafka # <--- Targets the operator namespace cleanly
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
