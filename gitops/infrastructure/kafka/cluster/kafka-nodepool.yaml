@@ -6,11 +6,15 @@ metadata:
   labels:
     strimzi.io/cluster: nii-kafka-cluster
 spec:
+  nodePoolId: 1
   replicas: 1
   roles:
     - broker
     - controller
   storage:
-    type: persistent-claim
-    size: 10Gi
-    class: local-path
+    type: jbod
+    volumes:
+      - id: 0
+      - type: persistent-claim
+        size: 10Gi
+        class: local-path
