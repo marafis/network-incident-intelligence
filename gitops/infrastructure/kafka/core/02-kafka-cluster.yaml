@@ -1,7 +1,8 @@
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
-  name: pool-default
+  name: default-pool
+  namespace: nii-kafka
   labels:
     strimzi.io/cluster: nii-kafka
 spec:
@@ -10,7 +11,7 @@ spec:
     - controller
     - broker
   storage:
-    type: ephemeral
+    type: persistent-claim
 ---
 apiVersion: kafka.strimzi.io/v1
 kind: Kafka
