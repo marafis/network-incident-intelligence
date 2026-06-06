@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/marafis/network-incident-intelligence
-    targetRevision: main
-    path: gitops/infrastructure/kafka/strimzi
+    repoURL: https://strimzi.io/charts/
+    chart: strimzi-kafka-operator
+    targetRevision: 1.0.0
   destination:
     server: https://kubernetes.default.svc
     namespace: strimzi-kafka-operator
