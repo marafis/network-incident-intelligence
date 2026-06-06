@@ -14,7 +14,7 @@ spec:
     helm:
       values: |
         watchNamespaces:
-          - nii-kafka
+          - "*"  # Watch all namespaces
         extraEnvs:
           - name: STRIMZI_KUBERNETES_VERSION
             value: "1.30"  
