@@ -4,7 +4,7 @@ metadata:
   name: main-pool
   namespace: nii-infrastructure
   labels:
-    strimzi.io/cluster: nii-kafka
+    strimzi.io/cluster: nii-kafka-cluster
 spec:
   replicas: 1
   roles:
@@ -15,7 +15,7 @@ spec:
     size: 10Gi
     class: local-path
     deleteClaim: false
-  kraftMetadata: shared
+    kraftMetadata: shared
   resources:
     requests:
       memory: 1Gi
@@ -25,5 +25,12 @@ spec:
       cpu: "500m"
   template:
     pod:
-      nodeSelector:
-        workload-type: heavy          # Pins Kafka securely alongside PostgreSQL
+      affinity: # Replaces nodeSelector with valid Strimzi pod affinity
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values:
+                      - heavy

@@ -4,7 +4,7 @@ metadata:
   name: network-incidents-topic
   namespace: nii-infrastructure
   labels:
-    strimzi.io/cluster: nii-kafka       # Ties the topic directly to your cluster instance
+    strimzi.io/cluster: nii-kafka-cluster     # Ties the topic directly to your cluster instance
 spec:
   partitions: 3
   replicas: 1
