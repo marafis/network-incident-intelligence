@@ -1,7 +1,7 @@
 apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
-  name: nii-kafka
+  name: nii-kafka-cluster
   namespace: nii-infrastructure
 spec:
   kafka:
