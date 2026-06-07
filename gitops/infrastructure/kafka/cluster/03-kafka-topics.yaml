@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: default-topic
@@ -12,7 +12,7 @@ spec:
     retention.ms: 604800000
     segment.bytes: 1073741824
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: network-incidents
@@ -26,7 +26,7 @@ spec:
     retention.ms: 2592000000  # 30 days
     segment.bytes: 536870912   # 512MB
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: alerts
