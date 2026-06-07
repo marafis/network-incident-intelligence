@@ -6,6 +6,12 @@ rules:
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "ingresses" ]
+    verbs: [ "get", "list", "watch", "create", "update", "patch", "delete" ]
+  - apiGroups: [ "networking.k8s.io" ]
+    resources: [ "networkpolicies" ] # optional, already in main role but harmless
+    verbs: [ "get", "list", "watch", "create", "update", "patch", "delete" ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
