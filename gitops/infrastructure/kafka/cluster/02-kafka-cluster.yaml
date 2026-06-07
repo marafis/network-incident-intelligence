@@ -21,7 +21,7 @@ spec:
         type: nodeport
         tls: false
       - name: controller
-        port: 9090
+        port: 9095
         type: internal
         tls: false
     config:
