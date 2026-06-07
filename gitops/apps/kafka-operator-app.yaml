@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kafka
+  name: kafka-operator
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
-    path: gitops/infrastructure/kafka
+    path: gitops/infrastructure/kafka/operator
   destination:
     server: https://kubernetes.default.svc
     namespace: kafka
@@ -20,4 +20,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ApplyOutOfSyncOnly=true
