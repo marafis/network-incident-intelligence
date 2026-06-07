@@ -7,6 +7,9 @@ metadata:
 spec:
   partitions: 3
   replicas: 1
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1073741824
 ---
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
@@ -17,6 +20,9 @@ metadata:
 spec:
   partitions: 3
   replicas: 1
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1073741824
 ---
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
@@ -27,3 +33,6 @@ metadata:
 spec:
   partitions: 2
   replicas: 1
+  config:
+    retention.ms: 7200000
+    segment.bytes: 1073741824
