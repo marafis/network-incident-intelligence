@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - 02-kafka-cluster.yaml
   - 03-kafka-topics.yaml
+  - 04-kafka-node-pools.yaml
