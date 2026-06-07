@@ -1,20 +1,25 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nii-kafka
+  name: kafka
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
-    path: gitops/infrastructure/kafka/core
+    path: gitops/infrastructure/kafka
+    kustomize:
+      version: v4
   destination:
     server: https://kubernetes.default.svc
-    namespace: nii-kafka
+    namespace: kafka
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
