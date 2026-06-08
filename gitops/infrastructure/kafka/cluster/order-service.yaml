@@ -1,0 +1,34 @@
+# kafka/production/users/order-service.yaml
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaUser
+metadata:
+  name: order-service
+  labels:
+    strimzi.io/cluster: production-kafka
+spec:
+  authentication:
+    type: tls
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: orders
+          patternType: literal
+        operations:
+          - Create
+          - Write
+          - Describe
+      - resource:
+          type: topic
+          name: order-events
+          patternType: literal
+        operations:
+          - Read
+          - Describe
+      - resource:
+          type: group
+          name: order-service-
+          patternType: prefix
+        operations:
+          - Read
