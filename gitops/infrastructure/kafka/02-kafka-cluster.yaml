@@ -53,15 +53,15 @@ spec:
       auto.create.topics.enable: "false"
       log.retention.hours: "168"
     readinessProbe:
-      initialDelaySeconds: 60
-      timeoutSeconds: 5
-      periodSeconds: 10
-      failureThreshold: 6
+      initialDelaySeconds: 90
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 8
     livenessProbe:
-      initialDelaySeconds: 60
-      timeoutSeconds: 5
-      periodSeconds: 10
-      failureThreshold: 6
+      initialDelaySeconds: 90
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 8
   entityOperator:
     topicOperator:
       resources:
