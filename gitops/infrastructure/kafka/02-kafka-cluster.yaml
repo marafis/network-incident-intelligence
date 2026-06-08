@@ -32,6 +32,9 @@ spec:
   kafka:
     version: 4.1.0
     metadataVersion: 4.1-IV0
+    jvmOptions:
+      "-Xms": "512m"
+      "-Xmx": "512m"
     listeners:
       - name: plain
         port: 9092
