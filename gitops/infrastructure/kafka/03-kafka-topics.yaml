@@ -16,7 +16,7 @@
 # (LLM timeout, unparseable payload, confidence below threshold)
 # is published here instead of being silently dropped.
 # 30-day retention gives time to investigate and reprocess.
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: network-alerts
@@ -33,7 +33,7 @@ spec:
     compression.type: lz4
 ---
 
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: processed-incidents
@@ -50,7 +50,7 @@ spec:
     compression.type: lz4
 ---
 
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: alerts-dead-letter

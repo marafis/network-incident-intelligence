@@ -18,7 +18,7 @@
 #
 # entityOperator — manages KafkaTopic and KafkaUser CRs automatically.
 # Without it, kafka-topics.yaml manifests are silently ignored.
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: nii-kafka-cluster

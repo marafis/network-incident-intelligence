@@ -15,7 +15,7 @@
 # affinity pins ALL Kafka pods to Server 2 (workload-type=heavy).
 # requiredDuringScheduling = pods NEVER land on control plane node,
 # keeping Server 1 free for ArgoCD, ingress, and cert-manager.
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: dual-role
