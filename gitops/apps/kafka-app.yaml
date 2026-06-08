@@ -14,7 +14,7 @@ spec:
     path: gitops/infrastructure/kafka
   destination:
     server: https://kubernetes.default.svc
-    namespace: kafka
+    namespace: nii-infrastructure
   syncPolicy:
     automated:
       prune: false  # Don't auto-delete topics

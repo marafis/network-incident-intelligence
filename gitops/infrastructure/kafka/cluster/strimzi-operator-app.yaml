@@ -24,7 +24,7 @@ spec:
             memory: "256Mi"
   destination:
     server: https://kubernetes.default.svc
-    namespace: strimzi-system
+    namespace: nii-infrastructure
   syncPolicy:
     automated:
       prune: true
