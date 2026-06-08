@@ -5,6 +5,8 @@ kind: Application
 metadata:
   name: strimzi-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
@@ -12,16 +14,21 @@ spec:
     chart: strimzi-kafka-operator
     targetRevision: 1.0.0
     helm:
-      values: |
-        replicas: 1
-        watchAnyNamespace: true
+      valuesObject:
+        watchAnyNamespace: false
+        watchNamespaces:
+          - nii-infrastructure
+        operationTimeoutMs: 600000
+        extraEnvs:
+          - name: STRIMZI_KUBERNETES_VERSION
+            value: "major=1, minor=30"
         resources:
-          limits:
-            cpu: "1"
-            memory: "512Mi"
           requests:
-            cpu: "200m"
             memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
   destination:
     server: https://kubernetes.default.svc
     namespace: nii-infrastructure
@@ -32,3 +39,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true

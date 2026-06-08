@@ -3,8 +3,10 @@ kind: Application
 metadata:
   name: kafka-production
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
-    team: data-platform
+    app.kubernetes.io/part-of: network-incident-intelligence
     component: kafka
 spec:
   project: default
@@ -21,7 +23,9 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
       - RespectIgnoreDifferences=true
+      - ApplyOutOfSyncOnly=true
     retry:
       limit: 5
       backoff:
@@ -29,6 +33,15 @@ spec:
         factor: 2
         maxDuration: 10m
   ignoreDifferences:
+    - group: kafka.strimzi.io
+      kind: KafkaNodePool
+      jsonPointers:
+        - /metadata/annotations
+        - /spec/storage/volumes
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+      jsonPointers:
+        - /subjects
     - group: kafka.strimzi.io
       kind: Kafka
       jsonPointers:
