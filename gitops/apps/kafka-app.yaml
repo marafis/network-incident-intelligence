@@ -7,7 +7,7 @@ metadata:
     team: data-platform
     component: kafka
 spec:
-  project: data-infrastructure
+  project: default
   source:
     repoURL: https://github.com/marafis/network-incident-intelligence
     targetRevision: main
