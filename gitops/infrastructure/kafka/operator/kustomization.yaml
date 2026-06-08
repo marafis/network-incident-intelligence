@@ -1,6 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - strimzi-cluster-operator-1.0.0.yaml
-  - rbac-extra.yaml
