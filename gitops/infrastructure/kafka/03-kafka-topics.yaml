@@ -25,7 +25,7 @@ metadata:
     strimzi.io/cluster: nii-kafka-cluster
     app.kubernetes.io/part-of: network-incident-intelligence
 spec:
-  partitions: 3
+  partitions: 1
   replicas: 1
   config:
     retention.ms: "604800000"
@@ -42,7 +42,7 @@ metadata:
     strimzi.io/cluster: nii-kafka-cluster
     app.kubernetes.io/part-of: network-incident-intelligence
 spec:
-  partitions: 3
+  partitions: 1
   replicas: 1
   config:
     retention.ms: "604800000"

@@ -1,3 +1,4 @@
+# 01-kafka-nodepool.yaml
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
@@ -18,11 +19,11 @@ spec:
         type: persistent-claim
         size: 10Gi
         class: local-path
-        deleteClaim: false
+        deleteClaim: false # Set to false per Strimzi production examples to prevent data loss on pod updates
   resources:
     requests:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "500m"      # Aligns with 1.0.0 example minimum execution profiles to prevent JVM startup lag
+      memory: "1Gi"    # Optimized to fit within your 4GB footprint while covering the 512m heap
     limits:
-      cpu: "2"
-      memory: "2Gi"
+      cpu: "2"         # Allows structural burst room during crypt/secret handshakes
+      memory: "1.5Gi"
