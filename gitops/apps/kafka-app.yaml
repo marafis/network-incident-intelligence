@@ -37,6 +37,7 @@ spec:
       kind: KafkaNodePool
       jsonPointers:
         - /metadata/annotations
+        - /status
     - group: rbac.authorization.k8s.io
       kind: RoleBinding
       jsonPointers:
@@ -44,4 +45,5 @@ spec:
     - group: kafka.strimzi.io
       kind: Kafka
       jsonPointers:
+        - /metadata/annotations
         - /status
