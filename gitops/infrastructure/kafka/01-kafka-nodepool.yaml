@@ -1,4 +1,3 @@
-# 01-kafka-nodepool.yaml
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
@@ -13,17 +12,16 @@ spec:
     - controller
     - broker
   storage:
-    type: jbod
-    volumes:
-      - id: 0
-        type: persistent-claim
-        size: 10Gi
-        class: local-path
-        deleteClaim: false # Set to false per Strimzi production examples to prevent data loss on pod updates
+    type: persistent-claim   # Simplified matching your working Postgres model
+    size: 10Gi
+    class: local-path
+    deleteClaim: false       # Crucial: Protects your data logs during restarts
+  nodeSelector:
+    workload-type: heavy     # Pins Kafka to the exact same high-capacity server node as Postgres
   resources:
     requests:
-      cpu: "500m"      # Aligns with 1.0.0 example minimum execution profiles to prevent JVM startup lag
-      memory: "1Gi"    # Optimized to fit within your 4GB footprint while covering the 512m heap
+      cpu: "500m"            # Elevated to prevent crypto handshake stalling
+      memory: "1Gi"          # Reduced slightly so it easily slots into your 4GB node next to Postgres
     limits:
-      cpu: "2"         # Allows structural burst room during crypt/secret handshakes
+      cpu: "1.5"
       memory: "1.5Gi"
