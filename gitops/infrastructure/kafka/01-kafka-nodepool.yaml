@@ -36,17 +36,36 @@ spec:
         size: 10Gi
         class: local-path
         deleteClaim: true
-  template:
-    pod:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: workload-type
-                    operator: In
-                    values:
-                      - heavy
+  resources:
+    requests:
+      memory: "1.5Gi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+---
+
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: nii-infrastructure
+  labels:
+    strimzi.io/cluster: nii-kafka-cluster
+    app.kubernetes.io/part-of: network-incident-intelligence
+spec:
+  replicas: 1
+  roles:
+    - broker
+    - controller
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 10Gi
+        class: local-path
+        deleteClaim: true
   resources:
     requests:
       memory: "1.5Gi"

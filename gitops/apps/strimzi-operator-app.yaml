@@ -14,21 +14,16 @@ spec:
     chart: strimzi-kafka-operator
     targetRevision: 1.0.0
     helm:
-      valuesObject:
-        watchAnyNamespace: false
-        watchNamespaces:
-          - nii-infrastructure
-        operationTimeoutMs: 600000
-        extraEnvs:
-          - name: STRIMZI_KUBERNETES_VERSION
-            value: "major=1, minor=30"
+      values: |
+        replicas: 1
+        watchAnyNamespace: true
         resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
           limits:
+            cpu: "1"
             memory: "512Mi"
-            cpu: "1000m"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
   destination:
     server: https://kubernetes.default.svc
     namespace: nii-infrastructure
@@ -39,4 +34,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - ApplyOutOfSyncOnly=true

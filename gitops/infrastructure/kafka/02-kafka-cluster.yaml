@@ -1,23 +1,3 @@
-# WHY: Strimzi 1.0.0 + Kafka 3.9.0 in KRaft mode.
-# apiVersion v1beta2 — still the correct version in Strimzi 1.0.0.
-# The two annotations enable KRaft mode and KafkaNodePool support —
-# both are required, cluster CR is rejected without them.
-#
-# metadataVersion 3.9-IV0 — matches Kafka 3.9.0 exactly. Controls
-# which KRaft protocol features are active. Must be updated manually
-# when upgrading Kafka versions.
-#
-# All replication factors = 1 — single broker cluster. Setting higher
-# values causes under-replicated partition alerts and prevents the
-# cluster from ever becoming healthy on a single node.
-#
-# readinessProbe/livenessProbe with 60s initial delay — KRaft leader
-# election on constrained hardware (2 CPU, 3.7Gi RAM) takes longer
-# than default probe timing. Without this delay Kubernetes kills the
-# pod before KRaft election completes, creating an infinite restart loop.
-#
-# entityOperator — manages KafkaTopic and KafkaUser CRs automatically.
-# Without it, kafka-topics.yaml manifests are silently ignored.
 apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
@@ -28,7 +8,7 @@ metadata:
 spec:
   kafka:
     version: 4.1.0
-    metadataVersion: 4.1-IV0
+    metadataVersion: 4.1-IV1
     jvmOptions:
       "-Xms": "512m"
       "-Xmx": "512m"
