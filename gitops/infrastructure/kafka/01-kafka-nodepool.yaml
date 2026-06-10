@@ -17,11 +17,6 @@ spec:
     size: 10Gi
     class: local-path
     deleteClaim: false
-  # FIXED: nodeSelector must be nested under template.pod
-  template:
-    pod:
-      nodeSelector:
-        workload-type: heavy     # Pins Kafka to the exact same high-capacity server node as Postgres
   resources:
     requests:
       cpu: "500m"
