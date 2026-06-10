@@ -26,7 +26,6 @@ metadata:
 spec:
   replicas: 1
   roles:
-    - broker
     - controller
   storage:
     type: jbod
@@ -57,7 +56,6 @@ spec:
   replicas: 1
   roles:
     - broker
-    - controller
   storage:
     type: jbod
     volumes:
