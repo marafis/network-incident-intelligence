@@ -37,7 +37,6 @@ spec:
       kind: KafkaNodePool
       jsonPointers:
         - /metadata/annotations
-        - /spec/storage/volumes
     - group: rbac.authorization.k8s.io
       kind: RoleBinding
       jsonPointers:
