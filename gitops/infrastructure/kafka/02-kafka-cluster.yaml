@@ -3,6 +3,8 @@ kind: Kafka
 metadata:
   name: nii-kafka-cluster
   namespace: nii-infrastructure
+  annotations:
+    strimzi.io/node-pools: "enabled"
   labels:
     strimzi.io/cluster: nii-kafka-cluster
     app.kubernetes.io/part-of: network-incident-intelligence
