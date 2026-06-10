@@ -4,11 +4,11 @@ metadata:
   name: nii-kafka-cluster
   namespace: nii-infrastructure
   labels:
+    strimzi.io/cluster: nii-kafka-cluster
     app.kubernetes.io/part-of: network-incident-intelligence
 spec:
   kafka:
     version: 4.1.0
-    metadataVersion: 4.1-IV1
     jvmOptions:
       "-Xms": "512m"
       "-Xmx": "512m"
