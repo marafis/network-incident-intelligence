@@ -1,20 +1,3 @@
-# WHY: KafkaNodePool replaces the separate broker and zookeeper specs
-# from Zookeeper mode. Strimzi 1.0.0 is KRaft-only — Zookeeper is
-# fully removed. Pool identity comes from metadata.name and the
-# strimzi.io/cluster label — no nodePoolId field exists in the schema.
-#
-# dual-role: single pod acts as both broker (handles producer/consumer
-# traffic on 9092) and controller (handles KRaft metadata and leader
-# election on 9091). Correct for single-node learning cluster.
-# In production: separate controller and broker pools across nodes.
-#
-# JBOD storage required for KRaft mode. 10Gi on local-path provisioner
-# fits comfortably on Server 2's 40GB disk alongside PostgreSQL.
-# deleteClaim: false — PVC survives pod deletion, data is preserved.
-#
-# affinity pins ALL Kafka pods to Server 2 (workload-type=heavy).
-# requiredDuringScheduling = pods NEVER land on control plane node,
-# keeping Server 1 free for ArgoCD, ingress, and cert-manager.
 apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
@@ -27,34 +10,6 @@ spec:
   replicas: 1
   roles:
     - controller
-  storage:
-    type: jbod
-    volumes:
-      - id: 0
-        type: persistent-claim
-        size: 10Gi
-        class: local-path
-        deleteClaim: true
-  resources:
-    requests:
-      memory: "1.5Gi"
-      cpu: "250m"
-    limits:
-      memory: "2Gi"
-      cpu: "1"
----
-
-apiVersion: kafka.strimzi.io/v1
-kind: KafkaNodePool
-metadata:
-  name: dual-role
-  namespace: nii-infrastructure
-  labels:
-    strimzi.io/cluster: nii-kafka-cluster
-    app.kubernetes.io/part-of: network-incident-intelligence
-spec:
-  replicas: 1
-  roles:
     - broker
   storage:
     type: jbod
@@ -66,8 +21,8 @@ spec:
         deleteClaim: true
   resources:
     requests:
-      memory: "1.5Gi"
       cpu: "250m"
+      memory: "1.5Gi"
     limits:
-      memory: "2Gi"
       cpu: "1"
+      memory: "2Gi"
