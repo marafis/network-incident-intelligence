@@ -36,11 +36,6 @@ spec:
         
         # Logging
         logLevel: INFO
-        
-        # RBAC
-        serviceAccount:
-          create: true
-          name: strimzi-operator
 
   destination:
     server: https://kubernetes.default.svc
