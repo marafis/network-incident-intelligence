@@ -18,7 +18,8 @@ spec:
       releaseName: strimzi-operator
       values: |
         # Deploy operator in nii namespace (not strimzi-system)
-        watchNamespaces: nii
+        watchNamespaces: 
+          - nii
         
         # Resource constraints
         resources:
