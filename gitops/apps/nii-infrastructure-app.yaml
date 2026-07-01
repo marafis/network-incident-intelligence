@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-infrastructure
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    description: "NII Infrastructure - Kafka, PostgreSQL, Qdrant, Redis, Ollama"
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure
+    directory:
+      recurse: true
+      include: "*.yaml"
+      exclude: "*/kustomization.yaml"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii
+
+  syncPolicy:
+    automated:
+      prune: false        # Preserve data if app is removed
+      selfHeal: true      # Auto-sync on drift
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    # Phase the infrastructure rollout
+    phases:
+      - name: "Kafka Cluster"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["kafka-cluster"]
+        syncWave: 0
+
+      - name: "Databases & Storage"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["postgresql", "qdrant", "redis"]
+        syncWave: 1
+
+      - name: "LLM Runtime"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["ollama"]
+        syncWave: 2
+
+      - name: "Observability Stack"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["monitoring", "visualization"]
+        syncWave: 3
+
+      - name: "Topics & Secrets"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["kafka-topics", "secrets"]
+        syncWave: 4
+
+  # Ignore operator-managed and ephemeral fields
+  ignoreDifferences:
+    - group: strimzi.io
+      kind: Kafka
+      jsonPointers:
+        - /status
+        - /metadata/generation
+    - group: strimzi.io
+      kind: KafkaTopic
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
+        - /status
+    - group: ""
+      kind: Pod
+      jsonPointers:
+        - /status
+    - group: storage.k8s.io
+      kind: StorageClass
+      jsonPointers:
+        - /provisioner

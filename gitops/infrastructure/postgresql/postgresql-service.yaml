@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for StatefulSet
+  selector:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: nii
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+      protocol: TCP

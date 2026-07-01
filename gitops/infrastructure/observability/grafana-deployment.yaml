@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/component: visualization
+type: Opaque
+stringData:
+  admin-user: admin
+  admin-password: "GrafanaAdmin2025!Secure"  # ⚠️ CHANGE IN PRODUCTION
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/version: latest
+    app.kubernetes.io/component: visualization
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+      app.kubernetes.io/instance: nii
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/instance: nii
+        app.kubernetes.io/component: visualization
+
+    spec:
+      # Affinity: run on services-plane
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: nii/role
+                    operator: In
+                    values:
+                      - services-plane
+
+      # Security context
+      securityContext:
+        fsGroup: 472  # grafana user
+        runAsNonRoot: true
+        runAsUser: 472
+
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: web
+              containerPort: 3000
+              protocol: TCP
+
+          env:
+            # Grafana instance config
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: admin-password
+
+            # Grafana server config
+            - name: GF_SERVER_ROOT_URL
+              value: "http://grafana.marafis.com"  # Update with your ingress domain
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: "false"
+
+            # Dashboard provisioning
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: /var/lib/grafana/dashboards/nii-overview.json
+
+            # Datasource provisioning
+            - name: GF_PROVISIONING_DATASOURCES_AUTO_LOAD
+              value: "true"
+
+            # Disable telemetry
+            - name: GF_ANALYTICS_CHECK_FOR_UPDATES
+              value: "false"
+            - name: GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES
+              value: "false"
+            - name: GF_ANALYTICS_REPORTING_ENABLED
+              value: "false"
+
+            # Login configuration
+            - name: GF_USERS_ALLOW_SIGN_UP
+              value: "false"
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: web
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+
+          # Resource limits
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # Volume mounts
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-provisioning
+              mountPath: /etc/grafana/provisioning
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+      # Volumes
+      volumes:
+        - name: grafana-storage
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: grafana-provisioning
+          configMap:
+            name: grafana-provisioning
+            defaultMode: 0755
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+
+---
+# Grafana provisioning ConfigMap (directories structure)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/component: visualization
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'NII Dashboards'
+        orgId: 1
+        folder: 'NII Platform'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards

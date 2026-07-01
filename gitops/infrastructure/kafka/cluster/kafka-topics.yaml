@@ -1,0 +1,68 @@
+---
+# Topic 1: Raw network alerts
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: network-alerts
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: kafka-topics
+    app.kubernetes.io/instance: network-incident-intelligence
+    app.kubernetes.io/component: kafka-topics
+spec:
+  partitions: 3
+  replicationFactor: 3
+  config:
+    retention.ms: 604800000  # 7 days in milliseconds
+    retention.bytes: -1  # No size limit, only time-based
+    min.insync.replicas: 2
+    cleanup.policy: delete
+    compression.type: snappy
+    segment.ms: 86400000  # 1 day segment
+  topicName: network-alerts
+
+---
+# Topic 2: Processed incidents (enriched by LLM)
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: processed-incidents
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: kafka-topics
+    app.kubernetes.io/instance: network-incident-intelligence
+    app.kubernetes.io/component: kafka-topics
+spec:
+  partitions: 3
+  replicationFactor: 3
+  config:
+    retention.ms: 604800000  # 7 days
+    retention.bytes: -1
+    min.insync.replicas: 2
+    cleanup.policy: delete
+    compression.type: snappy
+    segment.ms: 86400000
+  topicName: processed-incidents
+
+---
+# Topic 3: Dead letter queue for failed processing
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: alerts-dead-letter
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: kafka-topics
+    app.kubernetes.io/instance: network-incident-intelligence
+    app.kubernetes.io/component: kafka-topics
+spec:
+  partitions: 1
+  replicationFactor: 3
+  config:
+    retention.ms: 2592000000  # 30 days
+    retention.bytes: -1
+    min.insync.replicas: 2
+    cleanup.policy: delete
+    compression.type: snappy
+    segment.ms: 86400000
+  topicName: alerts-dead-letter

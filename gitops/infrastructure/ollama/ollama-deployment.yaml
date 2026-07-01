@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/version: latest
+    app.kubernetes.io/component: llm-runtime
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+      app.kubernetes.io/instance: nii
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama
+        app.kubernetes.io/instance: nii
+        app.kubernetes.io/component: llm-runtime
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "11434"
+        prometheus.io/path: "/api/tags"
+
+    spec:
+      # Affinity: run on services-plane worker
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nii/role
+                    operator: In
+                    values:
+                      - services-plane
+
+      # Pod-level security context
+      securityContext:
+        fsGroup: 1000
+
+      # Init container: pull Llama 3.1 8B model
+      initContainers:
+        - name: model-puller
+          image: ollama/ollama:latest
+          imagePullPolicy: Always
+
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Ollama service to start..."
+              # Note: This init container will run in the pod before the main container starts
+              # The model will actually be pulled by the main container's lifecycle hook
+              echo "Model will be pulled by main container lifecycle hook"
+
+          env:
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
+            - name: OLLAMA_NUM_THREAD
+              value: "2"
+
+          resources:
+            requests:
+              memory: "0Mi"
+              cpu: "0m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          imagePullPolicy: Always
+
+          ports:
+            - name: api
+              containerPort: 11434
+              protocol: TCP
+
+          env:
+            # Resource allocation
+            - name: OLLAMA_NUM_PARALLEL
+              value: "2"  # Number of parallel requests
+            - name: OLLAMA_NUM_THREAD
+              value: "2"  # Number of threads
+            - name: OLLAMA_KEEP_ALIVE
+              value: "5m"  # Keep model in memory for 5 minutes
+
+            # Logging
+            - name: OLLAMA_DEBUG
+              value: "0"
+
+          # Lifecycle hooks to pull model on pod start
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    echo "Waiting for Ollama API to be ready..."
+                    for i in $(seq 1 30); do
+                      if curl -s http://localhost:11434/api/tags > /dev/null; then
+                        echo "Ollama API is ready. Pulling Llama 3.1 8B model..."
+                        ollama pull llama2:7b
+                        echo "Model pull initiated (may still be downloading in background)"
+                        break
+                      fi
+                      echo "Waiting... (attempt $i/30)"
+                      sleep 1
+                    done
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /api/tags
+              port: api
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/tags
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Resource limits: 0 request (on-demand), 1.5Gi limit
+          resources:
+            requests:
+              memory: "0Mi"
+              cpu: "0m"
+            limits:
+              memory: "1536Mi"
+              cpu: "2000m"
+
+          # Volume mounts for model cache
+          volumeMounts:
+            - name: ollama-models
+              mountPath: /.ollama/models
+
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+
+      # Volumes: emptyDir for model cache (ephemeral; models re-download on restart)
+      volumes:
+        - name: ollama-models
+          emptyDir:
+            sizeLimit: 2Gi
+
+      # Toleration for burstable resources
+      tolerations:
+        - key: "burstable"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"

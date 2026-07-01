@@ -1,0 +1,40 @@
+---
+# API Key Secret for Qdrant
+apiVersion: v1
+kind: Secret
+metadata:
+  name: qdrant-api-key
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/component: vector-store
+type: Opaque
+stringData:
+  api-key: "qdrant-api-key-nii-2025-secure-random"
+
+---
+# Qdrant Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: nii
+  labels:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/instance: nii
+    app.kubernetes.io/component: vector-store
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/instance: nii
+  ports:
+    - name: api
+      port: 6333
+      targetPort: api
+      protocol: TCP
+    - name: grpc
+      port: 6334
+      targetPort: grpc
+      protocol: TCP

@@ -1,0 +1,76 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-strimzi-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    description: "Strimzi Kafka Operator 1.0.0 - KRaft mode, no Zookeeper"
+spec:
+  project: default
+
+  source:
+    # Fetch Strimzi chart directly from official Helm repo
+    repoURL: https://strimzi.io/charts
+    chart: strimzi-kafka-operator
+    targetRevision: "1.0.0"
+    helm:
+      releaseName: strimzi-operator
+      values: |
+        # Deploy operator in nii namespace (not strimzi-system)
+        watchNamespaces: nii
+        
+        # Resource constraints
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+        
+        # Enable KRaft (no Zookeeper)
+        features:
+          KRaftEnabled: true
+        
+        # Logging
+        logLevel: INFO
+        
+        # RBAC
+        serviceAccount:
+          create: true
+          name: strimzi-operator
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Ignore Helm-managed fields and operator status
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /spec/conversion/webhook/clientConfig
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jsonPointers:
+        - /webhooks/0/clientConfig
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/template/metadata/annotations/deployment.kubernetes.io~1revision
