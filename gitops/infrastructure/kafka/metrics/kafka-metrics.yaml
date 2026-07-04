@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kafka-metrics
+  name: nii-kafka-metrics
   namespace: nii
   labels:
     app.kubernetes.io/name: kafka

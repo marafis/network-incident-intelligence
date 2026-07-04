@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prometheus-config
+  name: nii-prometheus-config
   namespace: nii
   labels:
     app.kubernetes.io/name: prometheus

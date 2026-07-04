@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: prometheus-data
+  name: nii-prometheus-data
   namespace: nii
   labels:
     app.kubernetes.io/name: prometheus
@@ -19,7 +19,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus
+  name: nii-prometheus
   namespace: nii
   labels:
     app.kubernetes.io/name: prometheus
@@ -161,7 +161,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: prometheus
+  name: nii-prometheus
   namespace: nii
   labels:
     app.kubernetes.io/name: prometheus

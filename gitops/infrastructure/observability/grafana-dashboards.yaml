@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboards
+  name: nii-grafana-dashboards
   namespace: nii
   labels:
     app.kubernetes.io/name: grafana

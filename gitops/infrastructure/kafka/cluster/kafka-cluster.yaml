@@ -1,12 +1,12 @@
 apiVersion: kafka.strimzi.io/v1beta1
 kind: Kafka
 metadata:
-  name: kafka-cluster
+  name: nii-kafka-cluster
   namespace: nii
   labels:
     app.kubernetes.io/name: kafka
-    app.kubernetes.io/instance: kafka-cluster
-    app.kubernetes.io/component: kafka-cluster
+    app.kubernetes.io/instance: nii-kafka-cluster
+    app.kubernetes.io/component: nii-kafka-cluster
     app.kubernetes.io/version: "3.9.0"
     app.kubernetes.io/managed-by: strimzi-operator
 spec:
