@@ -26,7 +26,7 @@ spec:
       selfHeal: true      # Auto-sync on drift
     syncOptions:
       - CreateNamespace=true
-      - Validate=true
+      - Validate=false
       - ServerSideApply=true
     retry:
       limit: 5
