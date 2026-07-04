@@ -6,6 +6,7 @@ metadata:
   name: network-alerts
   namespace: nii
   labels:
+    strimzi.io/cluster: kafka-cluster
     app.kubernetes.io/name: kafka-topics
     app.kubernetes.io/instance: network-incident-intelligence
     app.kubernetes.io/component: kafka-topics
@@ -29,6 +30,7 @@ metadata:
   name: processed-incidents
   namespace: nii
   labels:
+    strimzi.io/cluster: kafka-cluster
     app.kubernetes.io/name: kafka-topics
     app.kubernetes.io/instance: network-incident-intelligence
     app.kubernetes.io/component: kafka-topics
@@ -52,6 +54,7 @@ metadata:
   name: alerts-dead-letter
   namespace: nii
   labels:
+    strimzi.io/cluster: kafka-cluster
     app.kubernetes.io/name: kafka-topics
     app.kubernetes.io/instance: network-incident-intelligence
     app.kubernetes.io/component: kafka-topics

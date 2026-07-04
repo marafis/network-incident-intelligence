@@ -165,13 +165,16 @@ spec:
         - name: grafana-provisioning
           configMap:
             name: nii-grafana-provisioning
+            namespace: nii
             defaultMode: 0755
         - name: grafana-dashboards
           configMap:
             name: nii-grafana-dashboards
+            namespace: nii
         - name: grafana-datasources
           configMap:
             name: nii-grafana-datasources
+            namespace: nii
 
 ---
 # Grafana provisioning ConfigMap (directories structure)

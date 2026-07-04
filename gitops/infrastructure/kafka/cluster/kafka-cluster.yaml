@@ -39,7 +39,7 @@ spec:
         type: internal
         tls: false
         authentication:
-          type: scram-sha-512
+          type: none
       - name: CONTROLLER
         port: 9090
         type: internal
@@ -80,9 +80,10 @@ spec:
       "-Xmx": "768m"
     metricsConfig:
       type: jmxPrometheusExporter
-      valueSecret:
-        name: kafka-metrics
-        key: metrics-config.yaml
+      valueFrom:
+        configMapKeyRef:
+          name: nii-kafka-metrics
+          key: metrics-config.yaml
   entityOperator:
     topicOperator:
       resources:

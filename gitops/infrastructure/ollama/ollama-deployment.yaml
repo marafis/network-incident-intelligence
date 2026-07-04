@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nii-ollama
+  namespace: nii
   labels:
     app.kubernetes.io/name: ollama
     app.kubernetes.io/instance: nii
@@ -146,7 +147,7 @@ spec:
               memory: "0Mi"
               cpu: "0m"
             limits:
-              memory: "1536Mi"
+              memory: "8Gi"
               cpu: "2000m"
 
           # Volume mounts for model cache
@@ -166,7 +167,7 @@ spec:
       volumes:
         - name: nii-ollama-models
           emptyDir:
-            sizeLimit: 2Gi
+            sizeLimit: 6Gi
 
       # Toleration for burstable resources
       tolerations:

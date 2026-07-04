@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: nii-postgresql-data
+  namespace: nii
   labels:
     app.kubernetes.io/name: postgresql
     app.kubernetes.io/instance: nii

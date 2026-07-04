@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nii-prometheus-config
+  namespace: nii
   labels:
     app.kubernetes.io/name: prometheus
     app.kubernetes.io/instance: nii
@@ -143,7 +144,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prometheus-rules
+  name: nii-prometheus-rules
   namespace: nii
   labels:
     app.kubernetes.io/name: prometheus
