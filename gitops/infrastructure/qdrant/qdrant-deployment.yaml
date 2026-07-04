@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nii-qdrant
-  namespace: nii
   labels:
     app.kubernetes.io/name: qdrant
     app.kubernetes.io/instance: nii

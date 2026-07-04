@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nii-ollama
-  namespace: nii
   labels:
     app.kubernetes.io/name: ollama
     app.kubernetes.io/instance: nii
