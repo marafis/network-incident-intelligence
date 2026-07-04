@@ -79,7 +79,7 @@ spec:
               cpu: "500m"
 
       containers:
-        - name: ollama
+        - name: nii-ollama
           image: ollama/ollama:latest
           imagePullPolicy: Always
 
@@ -151,7 +151,7 @@ spec:
 
           # Volume mounts for model cache
           volumeMounts:
-            - name: ollama-models
+            - name: nii-ollama-models
               mountPath: /.ollama/models
 
           # Security context
@@ -164,7 +164,7 @@ spec:
 
       # Volumes: emptyDir for model cache (ephemeral; models re-download on restart)
       volumes:
-        - name: ollama-models
+        - name: nii-ollama-models
           emptyDir:
             sizeLimit: 2Gi
 

@@ -52,7 +52,7 @@ spec:
         runAsUser: 101
 
       containers:
-        - name: qdrant
+        - name: nii-qdrant
           image: qdrant/qdrant:latest
           imagePullPolicy: Always
 
@@ -118,9 +118,9 @@ spec:
 
           # Volume mounts
           volumeMounts:
-            - name: qdrant-data
+            - name: nii-qdrant-data
               mountPath: /qdrant
-            - name: qdrant-config
+            - name: nii-qdrant-config
               mountPath: /etc/qdrant
 
           # Security context
@@ -133,10 +133,10 @@ spec:
 
       # Volumes
       volumes:
-        - name: qdrant-data
+        - name: nii-qdrant-data
           persistentVolumeClaim:
-            claimName: qdrant-data
-        - name: qdrant-config
+            claimName: nii-qdrant-data
+        - name: nii-qdrant-config
           configMap:
-            name: qdrant-config
+            name: nii-qdrant-config
             optional: true

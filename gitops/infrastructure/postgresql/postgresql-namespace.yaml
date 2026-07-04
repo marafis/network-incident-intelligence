@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: nii
   labels:
-    name: nii
+    name: nii-postgresql
     app.kubernetes.io/instance: network-incident-intelligence
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/audit: restricted

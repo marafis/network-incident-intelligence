@@ -52,7 +52,7 @@ spec:
         runAsUser: 999
 
       containers:
-        - name: redis
+        - name: nii-redis
           image: redis:7-alpine
           imagePullPolicy: IfNotPresent
 
@@ -108,7 +108,7 @@ spec:
 
           # Volume mounts
           volumeMounts:
-            - name: redis-data
+            - name: nii-redis-data
               mountPath: /data
 
           # Security context
@@ -120,7 +120,7 @@ spec:
                 - ALL
 
         # Redis exporter for Prometheus metrics
-        - name: redis-exporter
+        - name: nii-redis-exporter
           image: oliver006/redis_exporter:latest
           imagePullPolicy: IfNotPresent
 
@@ -169,6 +169,6 @@ spec:
 
       # Volumes
       volumes:
-        - name: redis-data
+        - name: nii-redis-data
           emptyDir:
             sizeLimit: 100Mi

@@ -101,7 +101,7 @@ spec:
 
       containers:
         # PostgreSQL main container
-        - name: postgresql
+        - name: nii-postgresql
           image: postgres:16-alpine
           imagePullPolicy: IfNotPresent
 
@@ -171,7 +171,7 @@ spec:
                 - ALL
 
         # PostgreSQL exporter for Prometheus metrics
-        - name: postgresql-exporter
+        - name: nii-postgresql-exporter
           image: prometheuscommunity/postgres-exporter:v0.15.0
           imagePullPolicy: IfNotPresent
 
@@ -231,7 +231,7 @@ spec:
   # Persistent volume claim templates
   volumeClaimTemplates:
     - metadata:
-        name: postgresql-data
+        name: nii-postgresql-data
         labels:
           app.kubernetes.io/name: postgresql
           app.kubernetes.io/instance: nii
