@@ -1,6 +1,6 @@
 ---
 # Topic 1: Raw network alerts
-apiVersion: kafka.strimzi.io/v1beta1
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: network-alerts
@@ -24,7 +24,7 @@ spec:
 
 ---
 # Topic 2: Processed incidents (enriched by LLM)
-apiVersion: kafka.strimzi.io/v1beta1
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: processed-incidents
@@ -48,7 +48,7 @@ spec:
 
 ---
 # Topic 3: Dead letter queue for failed processing
-apiVersion: kafka.strimzi.io/v1beta1
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaTopic
 metadata:
   name: alerts-dead-letter
