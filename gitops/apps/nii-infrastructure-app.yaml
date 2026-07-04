@@ -15,8 +15,6 @@ spec:
     path: gitops/infrastructure
     directory:
       recurse: true
-      include: "*.yaml"
-      exclude: "*/kustomization.yaml"
 
   destination:
     server: https://kubernetes.default.svc

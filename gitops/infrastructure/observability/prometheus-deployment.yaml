@@ -64,7 +64,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
 
-      serviceAccountName: prometheus
+      serviceAccountName: nii-prometheus
 
       containers:
         - name: prometheus
@@ -208,5 +208,5 @@ roleRef:
   name: prometheus-nii
 subjects:
   - kind: ServiceAccount
-    name: prometheus
+    name: nii-prometheus
     namespace: nii
