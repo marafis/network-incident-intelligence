@@ -34,47 +34,6 @@ spec:
         duration: 5s
         factor: 2
         maxDuration: 3m
-    # Phase the infrastructure rollout
-    phases:
-      - name: "Kafka Cluster"
-        selector:
-          matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values: ["kafka-cluster"]
-        syncWave: 0
-
-      - name: "Databases & Storage"
-        selector:
-          matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values: ["postgresql", "qdrant", "redis"]
-        syncWave: 1
-
-      - name: "LLM Runtime"
-        selector:
-          matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values: ["ollama"]
-        syncWave: 2
-
-      - name: "Observability Stack"
-        selector:
-          matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values: ["monitoring", "visualization"]
-        syncWave: 3
-
-      - name: "Topics & Secrets"
-        selector:
-          matchExpressions:
-            - key: app.kubernetes.io/component
-              operator: In
-              values: ["kafka-topics", "secrets"]
-        syncWave: 4
 
   # Ignore operator-managed and ephemeral fields
   ignoreDifferences:
