@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nii-infrastructure
+  name: nii-strimzi-operator
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -15,8 +15,6 @@ spec:
     path: gitops/infrastructure
     directory:
       recurse: true
-      include: "*.yaml"
-      exclude: "*/kustomization.yaml"
 
   destination:
     server: https://kubernetes.default.svc

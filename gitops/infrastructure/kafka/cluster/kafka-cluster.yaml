@@ -124,9 +124,9 @@ spec:
 
     # JVM tuning
     jvmOptions:
-      -Xms: 512m
-      -Xmx: 768m
-      -XX:
+      "-Xms": "512m"
+      "-Xmx": "768m"
+      "-XX":
         - "+UseG1GC"
         - "+ParallelRefProcEnabled"
         - "+UnlockDiagnosticVMOptions"
