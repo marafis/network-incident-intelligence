@@ -1,41 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nii-strimzi-operator
+  name: nii-infrastructure
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
-    description: "Strimzi Kafka Operator 1.0.0 - KRaft mode, no Zookeeper"
+    argocd.argoproj.io/sync-wave: "2"
+    description: "NII Infrastructure - Kafka, PostgreSQL, Qdrant, Redis, Ollama"
 spec:
   project: default
 
   source:
-    # Fetch Strimzi chart directly from official Helm repo
-    repoURL: https://strimzi.io/charts
-    chart: strimzi-kafka-operator
-    targetRevision: "1.0.0"
-    helm:
-      releaseName: strimzi-operator
-      values: |
-        # Deploy operator in nii namespace (not strimzi-system)
-        watchNamespaces: 
-          - nii
-        
-        # Resource constraints
-        resources:
-          requests:
-            memory: 256Mi
-            cpu: 250m
-          limits:
-            memory: 512Mi
-            cpu: 500m
-        
-        # Enable KRaft (no Zookeeper)
-        features:
-          KRaftEnabled: true
-        
-        # Logging
-        logLevel: INFO
+    repoURL: https://github.com/marafis/network-incident-intelligence
+    targetRevision: main
+    path: gitops/infrastructure
+    directory:
+      recurse: true
+      include: "*.yaml"
+      exclude: "*/kustomization.yaml"
 
   destination:
     server: https://kubernetes.default.svc
@@ -43,29 +24,81 @@ spec:
 
   syncPolicy:
     automated:
-      prune: false
-      selfHeal: true
+      prune: false        # Preserve data if app is removed
+      selfHeal: true      # Auto-sync on drift
     syncOptions:
       - CreateNamespace=true
       - Validate=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
         duration: 5s
         factor: 2
         maxDuration: 3m
+    # Phase the infrastructure rollout
+    phases:
+      - name: "Kafka Cluster"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["kafka-cluster"]
+        syncWave: 0
 
-  # Ignore Helm-managed fields and operator status
+      - name: "Databases & Storage"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["postgresql", "qdrant", "redis"]
+        syncWave: 1
+
+      - name: "LLM Runtime"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["ollama"]
+        syncWave: 2
+
+      - name: "Observability Stack"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["monitoring", "visualization"]
+        syncWave: 3
+
+      - name: "Topics & Secrets"
+        selector:
+          matchExpressions:
+            - key: app.kubernetes.io/component
+              operator: In
+              values: ["kafka-topics", "secrets"]
+        syncWave: 4
+
+  # Ignore operator-managed and ephemeral fields
   ignoreDifferences:
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
+    - group: strimzi.io
+      kind: Kafka
       jsonPointers:
-        - /spec/conversion/webhook/clientConfig
-    - group: admissionregistration.k8s.io
-      kind: ValidatingWebhookConfiguration
+        - /status
+        - /metadata/generation
+    - group: strimzi.io
+      kind: KafkaTopic
       jsonPointers:
-        - /webhooks/0/clientConfig
+        - /status
     - group: apps
-      kind: Deployment
+      kind: StatefulSet
       jsonPointers:
-        - /spec/template/metadata/annotations/deployment.kubernetes.io~1revision
+        - /spec/volumeClaimTemplates
+        - /status
+    - group: ""
+      kind: Pod
+      jsonPointers:
+        - /status
+    - group: storage.k8s.io
+      kind: StorageClass
+      jsonPointers:
+        - /provisioner
