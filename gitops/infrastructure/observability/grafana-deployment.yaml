@@ -164,21 +164,21 @@ spec:
             sizeLimit: 500Mi
         - name: grafana-provisioning
           configMap:
-            name: grafana-provisioning
+            name: nii-grafana-provisioning
             defaultMode: 0755
         - name: grafana-dashboards
           configMap:
-            name: grafana-dashboards
+            name: nii-grafana-dashboards
         - name: grafana-datasources
           configMap:
-            name: grafana-datasources
+            name: nii-grafana-datasources
 
 ---
 # Grafana provisioning ConfigMap (directories structure)
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-provisioning
+  name: nii-grafana-provisioning
   namespace: nii
   labels:
     app.kubernetes.io/name: grafana

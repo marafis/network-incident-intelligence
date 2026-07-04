@@ -322,7 +322,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-datasources
+  name: nii-grafana-datasources
   namespace: nii
   labels:
     app.kubernetes.io/name: grafana
