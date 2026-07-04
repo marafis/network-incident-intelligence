@@ -4,13 +4,13 @@ metadata:
   name: nii-strimzi-operator
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "1"
     description: "Strimzi Kafka Operator Framework for NII Infrastructure - Kafka, PostgreSQL, Qdrant, Redis, Ollama"
 spec:
   project: default
 
   source:
-    repoURL: oci://quay.io/strimzi-helm # Pulls from official vendor registry
+    repoURL: oci://quay.io/strimzi-helm/strimzi-kafka-operator # Pulls from official vendor registry
     chart: strimzi-kafka-operator
     targetRevision: 1.1.0
     helm:
