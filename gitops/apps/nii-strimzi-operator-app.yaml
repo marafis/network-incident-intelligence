@@ -5,16 +5,17 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
-    description: "NII Infrastructure - Kafka, PostgreSQL, Qdrant, Redis, Ollama"
+    description: "Strimzi Kafka Operator Framework for NII Infrastructure - Kafka, PostgreSQL, Qdrant, Redis, Ollama"
 spec:
   project: default
 
   source:
-    repoURL: https://github.com/marafis/network-incident-intelligence
-    targetRevision: main
-    path: gitops/infrastructure
-    directory:
-      recurse: true
+    repoURL: oci://quay.io/strimzi-helm # Pulls from official vendor registry
+    chart: strimzi-kafka-operator
+    targetRevision: 1.1.0
+    helm:
+      values: |
+        watchAnyNamespace: true
 
   destination:
     server: https://kubernetes.default.svc
