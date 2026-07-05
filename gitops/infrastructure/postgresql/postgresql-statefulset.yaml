@@ -32,9 +32,10 @@ spec:
       # Affinity: run on data-plane worker
       affinity:
         nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
                   - key: nii/role
                     operator: In
                     values:
