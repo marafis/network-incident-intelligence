@@ -14,6 +14,13 @@ spec:
     version: "3.9.0"
     replicas: 3
     metadataVersion: "3.9-IV0"
+    resources:
+      requests:
+        memory: 768Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
     config:
       controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9090,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9090,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9090"
       controller.listener.names: CONTROLLER
@@ -66,14 +73,6 @@ spec:
                       operator: In
                       values:
                         - data-plane
-      kafkaContainer:
-        resources:
-          requests:
-            memory: 768Mi
-            cpu: 500m
-          limits:
-            memory: 1Gi
-            cpu: 1000m
     jvmOptions:
       "-Xms": "512m"
       "-Xmx": "768m"
