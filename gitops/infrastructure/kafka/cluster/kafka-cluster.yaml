@@ -12,15 +12,6 @@ metadata:
 spec:
   kafka:
     version: "3.9.0"
-    replicas: 3
-    metadataVersion: "3.9-IV0"
-    resources:
-      requests:
-        memory: 768Mi
-        cpu: 500m
-      limits:
-        memory: 1Gi
-        cpu: 1000m
     config:
       controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9090,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9090,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9090"
       controller.listener.names: CONTROLLER
@@ -55,13 +46,6 @@ spec:
         port: 9094
         type: nodeport
         tls: false
-    storage:
-      type: jbod
-      volumes:
-        - id: 0
-          type: persistent-claim
-          size: 20Gi
-          storageClass: local-path
     template:
       pod:
         affinity:

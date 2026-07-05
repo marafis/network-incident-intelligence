@@ -16,6 +16,13 @@ spec:
     limits:
       memory: 1Gi
       cpu: 1000m
-  # Optional: you can also place storage and jvmOptions here,
-  # but they are already defined in the Kafka CR. Strimzi will merge them.
-  # For simplicity, keep storage/jvmOptions in the Kafka CR.
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 20Gi
+        storageClass: local-path
+  jvmOptions:
+    "-Xms": "512m"
+    "-Xmx": "768m"
