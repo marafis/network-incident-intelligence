@@ -63,6 +63,8 @@ spec:
         fsGroup: 65534  # nobody user
         runAsNonRoot: true
         runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
 
       serviceAccountName: nii-prometheus
 
@@ -136,6 +138,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+          seccompProfile:
+            type: RuntimeDefault
 
       # Volumes
       volumes:

@@ -49,6 +49,10 @@ spec:
       # Pod-level security context
       securityContext:
         fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
 
       # Init container: pull Llama 3.1 8B model
       initContainers:
@@ -78,6 +82,16 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       containers:
         - name: nii-ollama
@@ -159,9 +173,13 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       # Volumes: emptyDir for model cache (ephemeral; models re-download on restart)
       volumes:

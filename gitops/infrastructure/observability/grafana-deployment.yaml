@@ -56,6 +56,8 @@ spec:
         fsGroup: 472  # grafana user
         runAsNonRoot: true
         runAsUser: 472
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: grafana
@@ -156,6 +158,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       # Volumes
       volumes:

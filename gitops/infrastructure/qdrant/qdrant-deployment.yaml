@@ -47,9 +47,11 @@ spec:
 
       # Security context
       securityContext:
-        fsGroup: 101  # qdrant user
+        fsGroup: 1000  # qdrant user
         runAsNonRoot: true
-        runAsUser: 101
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: nii-qdrant
@@ -130,6 +132,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       # Volumes
       volumes:

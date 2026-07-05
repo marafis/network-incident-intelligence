@@ -50,6 +50,8 @@ spec:
         fsGroup: 999  # redis user
         runAsNonRoot: true
         runAsUser: 999
+        seccompProfile:
+          type: RuntimeDefault
 
       containers:
         - name: nii-redis
@@ -118,6 +120,7 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
 
         # Redis exporter for Prometheus metrics
         - name: nii-redis-exporter
@@ -166,6 +169,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       # Volumes
       volumes:
