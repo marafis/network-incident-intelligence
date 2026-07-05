@@ -87,7 +87,7 @@ spec:
             - name: QDRANT__API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: qdrant-api-key
+                  name: nii-qdrant-api-key
                   key: api-key
 
           # Health checks
