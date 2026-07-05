@@ -15,7 +15,7 @@ spec:
       - id: 0
         type: persistent-claim
         size: 20Gi
-        storageClass: local-path  # use your actual StorageClass name
+        class: local-path  # use your actual StorageClass name
   resources:
     requests:
       memory: 768Mi
