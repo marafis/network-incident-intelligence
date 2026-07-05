@@ -12,27 +12,7 @@ metadata:
 spec:
   kafka:
     version: "3.9.0"
-    replicas: 3
-    metadataVersion: "3.9-IV0"
-    # --- ADDED BACK ---
-    resources:
-      requests:
-        memory: 768Mi
-        cpu: 500m
-      limits:
-        memory: 1Gi
-        cpu: 1000m
-    storage:
-      type: jbod
-      volumes:
-        - id: 0
-          type: persistent-claim
-          size: 20Gi
-          storageClass: local-path
-    jvmOptions:
-      "-Xms": "512m"
-      "-Xmx": "768m"
-    # --- END ADDED ---
+    # NOTE: replicas, resources, storage, jvmOptions removed – now in KafkaNodePool
     config:
       controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9095,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9095,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9095"
       controller.listener.names: controller
@@ -57,7 +37,6 @@ spec:
         port: 9092
         type: internal
         tls: false
-        # authentication removed – no auth
       - name: controller
         port: 9095
         type: internal
