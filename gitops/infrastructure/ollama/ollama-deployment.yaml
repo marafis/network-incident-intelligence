@@ -186,10 +186,3 @@ spec:
         - name: nii-ollama-models
           emptyDir:
             sizeLimit: 6Gi
-
-      # Toleration for burstable resources
-      tolerations:
-        - key: "burstable"
-          operator: "Equal"
-          value: "true"
-          effect: "NoSchedule"
