@@ -69,7 +69,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgresql-credentials
+                  name: nii-postgresql-credentials
                   key: postgres-password
             - name: POSTGRES_DB
               value: "postgres"
