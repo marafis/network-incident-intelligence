@@ -7,11 +7,12 @@ metadata:
     app.kubernetes.io/name: kafka
     app.kubernetes.io/instance: kafka-cluster
     app.kubernetes.io/component: kafka-cluster
-    app.kubernetes.io/version: "3.9.0"
+    app.kubernetes.io/version: "4.3.0"
     app.kubernetes.io/managed-by: strimzi-operator
 spec:
   kafka:
-    version: "3.9.0"
+    version: "4.3.0"
+    metadataVersion: "4.3-IV0"
     # NOTE: replicas, resources, storage, jvmOptions removed – now in KafkaNodePool
     config:
       controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9095,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9095,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9095"
