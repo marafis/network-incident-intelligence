@@ -13,9 +13,9 @@ spec:
   kafka:
     version: "3.9.0"
     config:
-      controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9090,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9090,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9090"
-      controller.listener.names: CONTROLLER
-      inter.broker.listener.name: PLAINTEXT
+      controller.quorum.voters: "0@kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.nii.svc:9095,1@kafka-cluster-kafka-1.kafka-cluster-kafka-brokers.nii.svc:9095,2@kafka-cluster-kafka-2.kafka-cluster-kafka-brokers.nii.svc:9095"
+      controller.listener.names: controller
+      inter.broker.listener.name: plaintext
       log.retention.hours: 168
       log.segment.bytes: 1073741824
       num.network.threads: 4
@@ -32,17 +32,16 @@ spec:
       transaction.state.log.replication.factor: 3
       transaction.state.log.min.isr: 2
     listeners:
-      - name: PLAINTEXT
+      - name: plaintext
         port: 9092
         type: internal
         tls: false
-        authentication:
-          type: none
-      - name: CONTROLLER
-        port: 9090
+        # authentication removed (no auth)
+      - name: controller
+        port: 9095
         type: internal
         tls: false
-      - name: EXTERNAL
+      - name: external
         port: 9094
         type: nodeport
         tls: false
@@ -57,9 +56,6 @@ spec:
                       operator: In
                       values:
                         - data-plane
-    jvmOptions:
-      "-Xms": "512m"
-      "-Xmx": "768m"
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:
