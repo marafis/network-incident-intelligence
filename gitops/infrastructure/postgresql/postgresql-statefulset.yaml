@@ -45,6 +45,8 @@ spec:
         fsGroup: 999  # postgres user
         runAsNonRoot: true
         runAsUser: 999
+        seccompProfile:
+          type: RuntimeDefault
 
       # Init container: create database and user
       initContainers:
@@ -119,6 +121,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
         # PostgreSQL exporter for Prometheus metrics
         - name: nii-postgresql-exporter
@@ -170,6 +174,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
       # Volumes
       volumes:
