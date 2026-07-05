@@ -67,14 +67,13 @@ spec:
                       values:
                         - data-plane
       kafkaContainer:
-        - name: kafka
-          resources:
-            requests:
-              memory: 768Mi
-              cpu: 500m
-            limits:
-              memory: 1Gi
-              cpu: 1000m
+        resources:
+          requests:
+            memory: 768Mi
+            cpu: 500m
+          limits:
+            memory: 1Gi
+            cpu: 1000m
     jvmOptions:
       "-Xms": "512m"
       "-Xmx": "768m"
