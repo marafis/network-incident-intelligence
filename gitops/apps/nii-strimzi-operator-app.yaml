@@ -16,6 +16,13 @@ spec:
     helm:
       values: |
         watchAnyNamespace: true
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop: ["ALL"]
+          allowPrivilegeEscalation: false
 
   destination:
     server: https://kubernetes.default.svc
