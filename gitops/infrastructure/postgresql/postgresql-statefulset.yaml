@@ -109,7 +109,7 @@ spec:
 
           # Volume mounts
           volumeMounts:
-            - name: postgresql-data
+            - name: nii-postgresql-data
               mountPath: /var/lib/postgresql/data
 
           # Security context
