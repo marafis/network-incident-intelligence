@@ -35,7 +35,7 @@ spec:
         prometheus.io/path: "/api/tags"
 
     spec:
-      # Affinity: run on services-plane worker
+      # Affinity: run on data-plane worker
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,7 +44,7 @@ spec:
                   - key: nii/role
                     operator: In
                     values:
-                      - services-plane
+                      - data-plane
 
       # Pod-level security context
       securityContext:
