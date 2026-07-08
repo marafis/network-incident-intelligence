@@ -58,12 +58,18 @@ spec:
               containerPort: 6334
               protocol: TCP
           env:
+            # Tell Qdrant exactly where the top-level home directory is
+            - name: QDRANT__STORAGE__STORAGE_PATH
+              value: /qdrant/storage
+
+            # Map sub-paths safely within that storage structure
             - name: QDRANT__STORAGE__SNAPSHOTS_PATH
-              value: /qdrant/data/snapshots
+              value: /qdrant/storage/snapshots
             - name: QDRANT__STORAGE__COLLECTIONS_PATH
-              value: /qdrant/data/collections
+              value: /qdrant/storage/collections
             - name: QDRANT__STORAGE__TEMP_PATH
-              value: /qdrant/data/temp
+              value: /qdrant/storage/temp
+
             - name: QDRANT__LOG_LEVEL
               value: "INFO"
             - name: QDRANT__PERFORMANCE__MAX_SEARCH_BATCH_SIZE
@@ -98,7 +104,7 @@ spec:
               cpu: "500m"
           volumeMounts:
             - name: nii-qdrant-data
-              mountPath: /qdrant/data
+              mountPath: /qdrant/storage
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
