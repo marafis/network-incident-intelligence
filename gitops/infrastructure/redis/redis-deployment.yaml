@@ -63,7 +63,7 @@ spec:
 
           args:
             - "--maxmemory"
-            - "96Mi"
+            - "96mb"
             - "--maxmemory-policy"
             - "allkeys-lru"
             - "--appendonly"
