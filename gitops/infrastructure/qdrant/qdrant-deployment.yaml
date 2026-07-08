@@ -81,7 +81,7 @@ spec:
                   key: api-key
           livenessProbe:
             httpGet:
-              path: /health
+              path: /livez
               port: api
             initialDelaySeconds: 30
             periodSeconds: 10
@@ -89,7 +89,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: api
             initialDelaySeconds: 10
             periodSeconds: 5
