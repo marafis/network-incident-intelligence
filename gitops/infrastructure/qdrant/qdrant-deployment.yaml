@@ -11,18 +11,15 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app.kubernetes.io/name: qdrant
       app.kubernetes.io/instance: nii
-
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-
   template:
     metadata:
       labels:
@@ -33,9 +30,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "6333"
         prometheus.io/path: "/metrics"
-
     spec:
-      # Affinity: run on data-plane worker
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -45,20 +40,16 @@ spec:
                     operator: In
                     values:
                       - data-plane
-
-      # Security context
       securityContext:
-        fsGroup: 1000  # qdrant user
+        fsGroup: 1000
         runAsNonRoot: true
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
-
       containers:
         - name: nii-qdrant
           image: qdrant/qdrant:latest
           imagePullPolicy: Always
-
           ports:
             - name: api
               containerPort: 6333
@@ -66,32 +57,22 @@ spec:
             - name: grpc
               containerPort: 6334
               protocol: TCP
-
           env:
-            # Configuration via environment variables
             - name: QDRANT__STORAGE__SNAPSHOTS_PATH
               value: /qdrant/data/snapshots
             - name: QDRANT__STORAGE__COLLECTIONS_PATH
               value: /qdrant/data/collections
             - name: QDRANT__STORAGE__TEMP_PATH
               value: /qdrant/data/temp
-
-            # Optimize for embedded vector storage
             - name: QDRANT__LOG_LEVEL
               value: "INFO"
-
-            # Performance tuning
             - name: QDRANT__PERFORMANCE__MAX_SEARCH_BATCH_SIZE
               value: "10000"
-
-            # API settings
             - name: QDRANT__API_KEY
               valueFrom:
                 secretKeyRef:
                   name: nii-qdrant-api-key
                   key: api-key
-
-          # Health checks
           livenessProbe:
             httpGet:
               path: /health
@@ -100,17 +81,14 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-
           readinessProbe:
             httpGet:
               path: /health
               port: api
             initialDelaySeconds: 10
             periodSeconds: 5
-            timeoutSeconds: 1
+            timeoutSeconds: 3
             failureThreshold: 3
-
-          # Resource limits
           resources:
             requests:
               memory: "256Mi"
@@ -118,13 +96,9 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-
-          # Volume mounts
           volumeMounts:
             - name: nii-qdrant-data
-              mountPath: /qdrant
-
-          # Security context
+              mountPath: /qdrant/data
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -133,8 +107,6 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-
-      # Volumes
       volumes:
         - name: nii-qdrant-data
           persistentVolumeClaim:

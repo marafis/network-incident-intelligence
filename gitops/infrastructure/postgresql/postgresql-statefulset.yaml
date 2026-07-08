@@ -11,12 +11,10 @@ metadata:
 spec:
   serviceName: nii-postgresql
   replicas: 1
-
   selector:
     matchLabels:
       app.kubernetes.io/name: postgresql
       app.kubernetes.io/instance: nii
-
   template:
     metadata:
       labels:
@@ -27,9 +25,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9187"
         prometheus.io/path: "/metrics"
-
     spec:
-      # Affinity: run on data-plane worker
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -40,29 +36,20 @@ spec:
                     operator: In
                     values:
                       - data-plane
-
-      # Security context
       securityContext:
-        fsGroup: 999  # postgres user
+        fsGroup: 999
         runAsNonRoot: true
         runAsUser: 999
         seccompProfile:
           type: RuntimeDefault
-
-      # Init container: create database and user
-      initContainers:
-
       containers:
-        # PostgreSQL main container
         - name: nii-postgresql
           image: postgres:16-alpine
           imagePullPolicy: IfNotPresent
-
           ports:
             - name: postgresql
               containerPort: 5432
               protocol: TCP
-
           env:
             - name: POSTGRES_USER
               value: "postgres"
@@ -77,8 +64,6 @@ spec:
               value: "-c shared_buffers=128MB -c max_connections=200"
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
-
-          # Health checks
           livenessProbe:
             exec:
               command:
@@ -89,7 +74,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-
           readinessProbe:
             exec:
               command:
@@ -98,10 +82,8 @@ spec:
                 - pg_isready -U postgres
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 1
+            timeoutSeconds: 3
             failureThreshold: 3
-
-          # Resource limits
           resources:
             requests:
               memory: "200Mi"
@@ -109,13 +91,9 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "500m"
-
-          # Volume mounts
           volumeMounts:
             - name: nii-postgresql-data
               mountPath: /var/lib/postgresql/data
-
-          # Security context
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -124,25 +102,19 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-
-        # PostgreSQL exporter for Prometheus metrics
         - name: nii-postgresql-exporter
           image: prometheuscommunity/postgres-exporter:v0.15.0
           imagePullPolicy: IfNotPresent
-
           ports:
             - name: metrics
               containerPort: 9187
               protocol: TCP
-
           env:
             - name: DATA_SOURCE_NAME
               valueFrom:
                 secretKeyRef:
                   name: nii-postgresql-credentials
                   key: postgres-admin-connection-string
-
-          # Health checks
           livenessProbe:
             httpGet:
               path: /metrics
@@ -150,25 +122,20 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 5
-
           readinessProbe:
             httpGet:
               path: /metrics
               port: metrics
-            initialDelaySeconds: 10
+            initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
-
-          # Resource limits
           resources:
             requests:
               memory: "32Mi"
               cpu: "50m"
             limits:
               memory: "64Mi"
-              cpu: "250m"
-
-          # Security context
+              cpu: "200m"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -177,15 +144,11 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-
-      # Volumes
       volumes:
         - name: init-scripts
           configMap:
             name: postgresql-init-scripts
             optional: true
-
-  # Persistent volume claim templates
   volumeClaimTemplates:
     - metadata:
         name: nii-postgresql-data

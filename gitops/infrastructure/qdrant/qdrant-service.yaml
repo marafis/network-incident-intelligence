@@ -1,20 +1,3 @@
----
-# API Key Secret for Qdrant
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nii-qdrant-api-key
-  namespace: nii
-  labels:
-    app.kubernetes.io/name: qdrant
-    app.kubernetes.io/instance: nii
-    app.kubernetes.io/component: vector-store
-type: Opaque
-stringData:
-  api-key: "qdrant-api-key-nii-2025-secure-random"
-
----
-# Qdrant Service
 apiVersion: v1
 kind: Service
 metadata:

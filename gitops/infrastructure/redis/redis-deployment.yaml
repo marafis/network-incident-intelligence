@@ -10,18 +10,15 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app.kubernetes.io/name: redis
       app.kubernetes.io/instance: nii
-
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-
   template:
     metadata:
       labels:
@@ -32,9 +29,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9121"
         prometheus.io/path: "/metrics"
-
     spec:
-      # Affinity: run on data-plane worker
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -44,23 +39,18 @@ spec:
                     operator: In
                     values:
                       - data-plane
-
-      # Security context
       securityContext:
-        fsGroup: 999  # redis user
+        fsGroup: 999
         runAsNonRoot: true
         runAsUser: 999
         seccompProfile:
           type: RuntimeDefault
-
       containers:
         - name: nii-redis
           image: redis:7-alpine
           imagePullPolicy: IfNotPresent
-
           command:
             - redis-server
-
           args:
             - "--maxmemory"
             - "96mb"
@@ -72,13 +62,10 @@ spec:
             - "everysec"
             - "--loglevel"
             - "notice"
-
           ports:
             - name: redis
               containerPort: 6379
               protocol: TCP
-
-          # Health checks
           livenessProbe:
             exec:
               command:
@@ -88,7 +75,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
-
           readinessProbe:
             exec:
               command:
@@ -96,10 +82,8 @@ spec:
                 - ping
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 1
+            timeoutSeconds: 3
             failureThreshold: 3
-
-          # Resource limits
           resources:
             requests:
               memory: "64Mi"
@@ -107,13 +91,9 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "250m"
-
-          # Volume mounts
           volumeMounts:
             - name: nii-redis-data
               mountPath: /data
-
-          # Security context
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -121,22 +101,17 @@ spec:
               drop:
                 - ALL
             seccompProfile:
-
-        # Redis exporter for Prometheus metrics
+              type: RuntimeDefault
         - name: nii-redis-exporter
           image: oliver006/redis_exporter:latest
           imagePullPolicy: IfNotPresent
-
           ports:
             - name: metrics
               containerPort: 9121
               protocol: TCP
-
           env:
             - name: REDIS_ADDR
               value: "localhost:6379"
-
-          # Health checks
           livenessProbe:
             httpGet:
               path: /metrics
@@ -144,25 +119,20 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 5
-
           readinessProbe:
             httpGet:
               path: /metrics
               port: metrics
             initialDelaySeconds: 5
             periodSeconds: 10
-            timeoutSeconds: 1
-
-          # Resource limits
+            timeoutSeconds: 3
           resources:
             requests:
               memory: "16Mi"
               cpu: "50m"
             limits:
               memory: "32Mi"
-              cpu: "100m"
-
-          # Security context
+              cpu: "150m"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -171,8 +141,6 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
-
-      # Volumes
       volumes:
         - name: nii-redis-data
           emptyDir:
