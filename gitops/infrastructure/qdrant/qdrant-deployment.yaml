@@ -70,11 +70,11 @@ spec:
           env:
             # Configuration via environment variables
             - name: QDRANT__STORAGE__SNAPSHOTS_PATH
-              value: /qdrant/snapshots
+              value: /qdrant/data/snapshots
             - name: QDRANT__STORAGE__COLLECTIONS_PATH
-              value: /qdrant/collections
+              value: /qdrant/data/collections
             - name: QDRANT__STORAGE__TEMP_PATH
-              value: /qdrant/temp
+              value: /qdrant/data/temp
 
             # Optimize for embedded vector storage
             - name: QDRANT__LOG_LEVEL
