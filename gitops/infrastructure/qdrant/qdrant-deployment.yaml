@@ -122,8 +122,6 @@ spec:
           volumeMounts:
             - name: nii-qdrant-data
               mountPath: /qdrant
-            - name: nii-qdrant-config
-              mountPath: /etc/qdrant
 
           # Security context
           securityContext:
@@ -140,7 +138,3 @@ spec:
         - name: nii-qdrant-data
           persistentVolumeClaim:
             claimName: nii-qdrant-data
-        - name: nii-qdrant-config
-          configMap:
-            name: nii-qdrant-config
-            optional: true
