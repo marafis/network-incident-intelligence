@@ -35,6 +35,15 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+    initContainer:
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
   storage:
     type: jbod
     volumes:
