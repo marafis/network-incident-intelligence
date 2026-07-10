@@ -12,11 +12,11 @@ metadata:
     app.kubernetes.io/component: kafka-topics
 spec:
   partitions: 3
-  replicas: 3
+  replicas: 2
   config:
     retention.ms: 604800000  # 7 days in milliseconds
     retention.bytes: -1  # No size limit, only time-based
-    min.insync.replicas: 2
+    min.insync.replicas: 1
     cleanup.policy: delete
     compression.type: snappy
     segment.ms: 86400000  # 1 day segment
@@ -36,11 +36,11 @@ metadata:
     app.kubernetes.io/component: kafka-topics
 spec:
   partitions: 3
-  replicas: 3
+  replicas: 2
   config:
     retention.ms: 604800000  # 7 days
     retention.bytes: -1
-    min.insync.replicas: 2
+    min.insync.replicas: 1
     cleanup.policy: delete
     compression.type: snappy
     segment.ms: 86400000
@@ -60,11 +60,11 @@ metadata:
     app.kubernetes.io/component: kafka-topics
 spec:
   partitions: 1
-  replicas: 3
+  replicas: 2
   config:
     retention.ms: 2592000000  # 30 days
     retention.bytes: -1
-    min.insync.replicas: 2
+    min.insync.replicas: 1
     cleanup.policy: delete
     compression.type: snappy
     segment.ms: 86400000
