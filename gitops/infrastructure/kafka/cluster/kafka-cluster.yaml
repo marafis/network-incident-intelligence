@@ -13,7 +13,6 @@ spec:
   kafka:
     version: "4.3.0"
     metadataVersion: "4.3-IV0"
-    # NOTE: replicas, resources, storage, jvmOptions removed – now in KafkaNodePool
     config:
       log.retention.hours: 168
       log.segment.bytes: 1073741824
@@ -58,15 +57,15 @@ spec:
                       operator: In
                       values:
                         - data-plane
-    container:
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+      container:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:
