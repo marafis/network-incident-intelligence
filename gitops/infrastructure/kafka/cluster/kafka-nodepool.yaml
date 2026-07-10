@@ -16,7 +16,8 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    container:
+    # Move the container context under the specific component container name:
+    broker:
       securityContext:
         allowPrivilegeEscalation: false
         capabilities:

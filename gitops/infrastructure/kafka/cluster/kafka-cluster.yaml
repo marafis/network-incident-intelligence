@@ -57,15 +57,6 @@ spec:
                       operator: In
                       values:
                         - data-plane
-      container:
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:
@@ -73,21 +64,6 @@ spec:
           name: nii-kafka-metrics
           key: metrics-config.yaml
   entityOperator:
-    template:
-      pod:
-        securityContext:
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
-      container:
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
     topicOperator:
       resources:
         requests:
@@ -96,6 +72,17 @@ spec:
         limits:
           memory: 512Mi
           cpu: 500m
+      # Target the specific operator container template here
+      template:
+        container:
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
     userOperator:
       resources:
         requests:
@@ -104,3 +91,20 @@ spec:
         limits:
           memory: 512Mi
           cpu: 500m
+      # Target the specific operator container template here
+      template:
+        container:
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+    template:
+      pod:
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
