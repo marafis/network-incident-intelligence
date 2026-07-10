@@ -16,8 +16,8 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    # Move the container context under the specific component container name:
-    broker:
+    # Fixed field name to kafkaContainer
+    kafkaContainer:
       securityContext:
         allowPrivilegeEscalation: false
         capabilities:

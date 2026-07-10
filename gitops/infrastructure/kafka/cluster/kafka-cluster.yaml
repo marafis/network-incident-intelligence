@@ -57,6 +57,16 @@ spec:
                       operator: In
                       values:
                         - data-plane
+      # Fixed field name to kafkaContainer here as well
+      kafkaContainer:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:
@@ -72,17 +82,6 @@ spec:
         limits:
           memory: 512Mi
           cpu: 500m
-      # Target the specific operator container template here
-      template:
-        container:
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
     userOperator:
       resources:
         requests:
@@ -91,20 +90,28 @@ spec:
         limits:
           memory: 512Mi
           cpu: 500m
-      # Target the specific operator container template here
-      template:
-        container:
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            runAsNonRoot: true
-            seccompProfile:
-              type: RuntimeDefault
+    # Realigned templates directly under entityOperator
     template:
       pod:
         securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      topicOperatorContainer:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+      userOperatorContainer:
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
           runAsNonRoot: true
           seccompProfile:
             type: RuntimeDefault
