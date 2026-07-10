@@ -42,31 +42,7 @@ spec:
         port: 9094
         type: nodeport
         tls: false
-    template:
-      pod:
-        securityContext:
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: nii/role
-                      operator: In
-                      values:
-                        - data-plane
-      # Fixed field name to kafkaContainer here as well
-      kafkaContainer:
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          runAsNonRoot: true
-          seccompProfile:
-            type: RuntimeDefault
+    # --- TEMPLATE SECTIONS REMOVED FROM HERE ---
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:
@@ -90,7 +66,6 @@ spec:
         limits:
           memory: 512Mi
           cpu: 500m
-    # Realigned templates directly under entityOperator
     template:
       pod:
         securityContext:

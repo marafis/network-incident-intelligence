@@ -16,7 +16,16 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-    # Fixed field name to kafkaContainer
+      # --- AFFINITY MOVED HERE ---
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nii/role
+                    operator: In
+                    values:
+                      - data-plane
     kafkaContainer:
       securityContext:
         allowPrivilegeEscalation: false
