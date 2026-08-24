@@ -1,0 +1,190 @@
+---
+# alert-consumer/Chart.yaml
+apiVersion: v2
+name: alert-consumer
+description: NII Alert Consumer - Kafka consumer with PostgreSQL persistence
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - nii
+  - kafka
+  - consumer
+  - postgresql
+
+maintainers:
+  - name: NII Platform Team
+    email: platform@marafis.com
+
+home: https://github.com/marafis/network-incident-intelligence
+sources:
+  - https://github.com/marafis/network-incident-intelligence
+
+dependencies: []
+
+---
+# alert-consumer/values.yaml
+replicaCount: 1
+
+image:
+  repository: ghcr.io/marafis/alert-consumer
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8082"
+  prometheus.io/path: "/actuator/prometheus"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8082
+  targetPort: 8082
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: alert-consumer.marafis.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector:
+  nii/role: "services-plane"
+
+tolerations: []
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: nii/role
+              operator: In
+              values:
+                - services-plane
+
+livenessProbe:
+  httpGet:
+    path: /health/consumer
+    port: 8082
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/consumer
+    port: 8082
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "production"
+  - name: KAFKA_BROKERS
+    value: "kafka-bootstrap.nii.svc:9092"
+  - name: DB_HOST
+    value: "postgresql.nii.svc"
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: "incident_db"
+  - name: DB_USER
+    value: "incident_db"
+  - name: CONSUMER_ENRICHMENT_ENABLED
+    value: "true"
+  - name: CONSUMER_ENRICHMENT_LOOKUP_METADATA
+    value: "true"
+
+envFrom:
+  - secretRef:
+      name: postgresql-credentials
+      optional: true
+
+config:
+  enabled: true
+  application.yml: |
+    spring:
+      application:
+        name: alert-consumer
+      cloud:
+        stream:
+          kafka:
+            binder:
+              brokers: kafka-bootstrap.nii.svc:9092
+          bindings:
+            network-alerts-in-0:
+              destination: network-alerts
+              content-type: application/json
+              group: alert-consumer-group
+              consumer:
+                concurrency: 1
+          function:
+            definition: alertConsumer
+    
+    consumer:
+      enrichment:
+        enabled: true
+        lookup-metadata: true
+        calculate-severity-score: true
+        add-runbook-reference: true
+    
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+
+persistence:
+  enabled: false
+  size: 10Gi
+  storageClassName: local-path
+  mountPath: /data
+
+extraVolumes: []
+extraVolumeMounts: []

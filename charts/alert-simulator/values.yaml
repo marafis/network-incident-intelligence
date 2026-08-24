@@ -1,0 +1,153 @@
+# Alert Simulator Helm Chart Values
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/marafis/alert-simulator
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8081"
+  prometheus.io/path: "/actuator/prometheus"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+nodeSelector:
+  "nii/role": services-plane
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: "nii/role"
+              operator: In
+              values:
+                - services-plane
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  httpGet:
+    path: /health/simulator
+    port: 8081
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/simulator
+    port: 8081
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "production"
+  - name: KAFKA_BROKERS
+    value: "kafka-bootstrap.nii.svc:9092"
+  - name: SIMULATOR_ENABLED
+    value: "true"
+  - name: SIMULATOR_GENERATION_INTERVAL_MS
+    value: "5000"
+  - name: SIMULATOR_GENERATION_BATCH_SIZE
+    value: "1"
+
+config:
+  enabled: true
+  "application.yml": |
+    spring:
+      application:
+        name: alert-simulator
+      cloud:
+        stream:
+          kafka:
+            binder:
+              brokers: ${KAFKA_BROKERS:kafka-bootstrap.nii.svc:9092}
+            producer:
+              properties:
+                batch.size: 16384
+                linger.ms: 5
+                compression.type: snappy
+          bindings:
+            network-alerts-out-0:
+              destination: network-alerts
+              content-type: application/json
+    server:
+      port: 8081
+    simulator:
+      enabled: true
+      generation:
+        interval-ms: 5000
+        batch-size: 1
+      alerts:
+        components:
+          - router-01
+          - switch-01
+          - firewall-01
+          - db-01
+          - lb-01
+        severity-distribution:
+          CRITICAL: 0.15
+          WARNING: 0.35
+          INFO: 0.50
+        messages:
+          - Router interface saturation detected on transits to peering fabric.
+          - High latency observed on core routing path between edge and services plane.
+          - Packet loss threshold exceeded on uplink to regional gateway.
+          - Switch port flapping detected on aggregation layer uplink.
+          - Firewall connection table nearing exhaustion under sustained load.
+          - Database replication lag exceeded acceptable threshold.
+          - Load balancer unhealthy backend detected during health check cycle.
+          - Link degradation reported by telemetry on east-west transit path.
+          - Interface CRC errors surged above baseline on distribution switch.
+          - Service dependency latency increased beyond performance threshold.
+        regions:
+          - us-east-1
+          - us-east-2
+          - eu-west-1
+          - ap-southeast-1
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+    logging:
+      level:
+        com.marafis.nii: DEBUG

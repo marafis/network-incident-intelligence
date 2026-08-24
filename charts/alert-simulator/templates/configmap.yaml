@@ -1,0 +1,28 @@
+---
+# ConfigMap template for alert-simulator
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "alert-simulator.fullname" . }}
+  namespace: {{ .Release.Namespace | default "nii" }}
+  labels:
+    {{ include "alert-simulator.labels" . | nindent 4 }}
+data:
+  {{- if .Values.config.enabled }}
+  application.yml: |
+{{ index .Values.config "application.yml" | nindent 4 }}
+  {{- end }}
+
+---
+# ServiceAccount template for alert-simulator
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "alert-simulator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "alert-simulator.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations:
+    {{ toYaml . | nindent 4 }}
+  {{- end }}

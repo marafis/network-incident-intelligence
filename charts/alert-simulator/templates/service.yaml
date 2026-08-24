@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "alert-simulator.fullname" . }}
+  namespace: {{ .Release.Namespace | default "nii" }}
+  labels:
+    {{- include "alert-simulator.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "alert-simulator.selectorLabels" . | nindent 4 }}
+

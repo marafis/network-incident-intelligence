@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: alert-consumer
+
+  # Kafka configuration
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA_BROKERS:kafka-bootstrap.nii.svc:9092}
+          configuration:
+            security.protocol: PLAINTEXT
+            # Consumer group for load balancing
+            group.id: alert-consumer-group
+            # Auto-commit offset
+            enable.auto.commit: true
+            auto.commit.interval.ms: 5000
+            # Session timeout
+            session.timeout.ms: 30000
+            # Fetch settings
+            fetch.min.bytes: 1024
+            fetch.max.wait.ms: 500
+      bindings:
+        # Binding for network-alerts consumer
+        network-alerts-in-0:
+          destination: network-alerts
+          content-type: application/json
+          group: alert-consumer-group
+          consumer:
+            # Manual acknowledgment (disabled for auto-commit)
+            acknowledgeMode: AUTO
+            # Concurrency: number of consumer threads
+            concurrency: 1
+            # Max poll records
+            maxPollRecords: 100
+            # Start from latest (or earliest for replay)
+            startOffset: latest
+      # Function definition
+      function:
+        definition: alertConsumer
+
+  # JPA/Hibernate configuration
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate  # Flyway manages schema, don't auto-create
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 25
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+
+  # DataSource (PostgreSQL for incident persistence)
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgresql.nii.svc}:${DB_PORT:5432}/${DB_NAME:incident_db}
+    username: ${DB_USER:incident_db}
+    password: ${DB_PASSWORD:Inc1d3nt@Db.Secure.2025}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      auto-commit: true
+
+  # Flyway configuration for database migrations
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    placeholder-replacement: true
+    placeholders:
+      app_name: alert-consumer
+
+# Consumer configuration
+consumer:
+  # Alert enrichment settings
+  enrichment:
+    enabled: true
+    lookup-metadata: true  # Lookup component metadata from DB
+    calculate-severity-score: true  # Calculate composite severity
+    add-runbook-reference: true  # Add runbook link for Phase 4 RAG
+
+  # Dead letter handling
+  dead-letter:
+    enabled: true
+    topic: alerts-dead-letter
+    max-retries: 3
+
+  # Alert deduplication (simple in-memory)
+  deduplication:
+    enabled: false  # Disabled for Phase 1, enable in Phase 2
+    window-minutes: 5
+    cache-size: 10000
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      version: 1.0.0
+      environment: ${ENVIRONMENT:development}
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.marafis.nii: DEBUG
+    org.springframework.cloud.stream: DEBUG
+    org.apache.kafka: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Server configuration
+server:
+  port: 8082
+  servlet:
+    context-path: /

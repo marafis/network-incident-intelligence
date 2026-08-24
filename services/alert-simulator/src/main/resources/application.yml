@@ -1,0 +1,120 @@
+spring:
+  application:
+    name: alert-simulator
+
+  # Kafka configuration
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA_BROKERS:kafka-bootstrap.nii.svc:9092}
+          configuration:
+            security.protocol: PLAINTEXT
+            # Batch settings for high throughput
+            batch.size: 32768
+            linger.ms: 10
+            compression.type: snappy
+      bindings:
+        # Binding for network-alerts producer
+        network-alerts-out-0:
+          destination: network-alerts
+          content-type: application/json
+          producer:
+            partition-key-expression: headers['partition-key']
+
+  # JPA/Hibernate (for metadata lookups in Phase 2)
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+
+  # DataSource (PostgreSQL for component metadata - Phase 2)
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgresql.nii.svc}:${DB_PORT:5432}/${DB_NAME:incident_db}
+    username: ${DB_USER:incident_db}
+    password: ${DB_PASSWORD:Inc1d3nt@Db.Secure.2025}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+# Simulator configuration (custom properties)
+simulator:
+  enabled: true
+  # Alert generation frequency
+  generation:
+    interval-ms: 5000  # Generate alert every 5 seconds
+    batch-size: 1      # Send 1 alert per cycle (can increase for load testing)
+
+  # Alert data distribution
+  alerts:
+    components:
+      - router-01
+      - switch-01
+      - firewall-01
+      - db-01
+      - lb-01
+
+    # Severity distribution (percentages)
+    severity-distribution:
+      CRITICAL: 0.15  # 15% critical
+      WARNING: 0.35   # 35% warnings
+      INFO: 0.50      # 50% info
+
+    # Sample alert messages
+    messages:
+      - "High CPU utilization detected"
+      - "Memory usage above threshold"
+      - "Network latency spike detected"
+      - "BGP session flap detected"
+      - "Interface errors detected"
+      - "Packet loss detected"
+      - "DNS resolution timeout"
+      - "Authentication failure"
+      - "Configuration change detected"
+      - "Device unreachable"
+
+    # Regions for simulated alerts
+    regions:
+      - us-east-1
+      - us-east-2
+      - eu-west-1
+      - ap-southeast-1
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      version: 1.0.0
+      environment: ${ENVIRONMENT:development}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.marafis.nii: DEBUG
+    org.springframework.cloud.stream: DEBUG
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Server configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /

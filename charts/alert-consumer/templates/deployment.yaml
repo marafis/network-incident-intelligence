@@ -1,0 +1,171 @@
+---
+# alert-consumer/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "alert-consumer.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alert-consumer.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "alert-consumer.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "alert-consumer.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "alert-consumer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8082
+              protocol: TCP
+
+          env:
+          {{- range .Values.env }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql-credentials
+                key: incident-db-password
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+          {{- with .Values.extraVolumeMounts }}
+          {{- toYaml . | nindent 8 }}
+          {{- end }}
+
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "alert-consumer.fullname" . }}
+            defaultMode: 0644
+      {{- with .Values.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
+---
+# alert-consumer/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "alert-consumer.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alert-consumer.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "alert-consumer.selectorLabels" . | nindent 4 }}
+
+---
+# alert-consumer/templates/_helpers.tpl (condensed)
+  {{- define "alert-consumer.name" -}}
+  {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+  {{- end }}
+  {{- define "alert-consumer.fullname" -}}
+  {{- if .Values.fullnameOverride }}
+  {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+  {{- else }}
+  {{- $name := default .Chart.Name .Values.nameOverride }}
+  {{- if contains $name .Release.Name }}
+  {{- .Release.Name | trunc 63 | trimSuffix "-" }}
+  {{- else }}
+  {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- define "alert-consumer.chart" -}}
+  {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+  {{- end }}
+  {{- define "alert-consumer.labels" -}}
+helm.sh/chart: {{ include "alert-consumer.chart" . }}
+  {{ include "alert-consumer.selectorLabels" . }}
+  {{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+  {{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- end }}
+  {{- define "alert-consumer.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "alert-consumer.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: alert-consumer
+  {{- end }}
+  {{- define "alert-consumer.serviceAccountName" -}}
+  {{- if .Values.serviceAccount.create }}
+  {{- default (include "alert-consumer.fullname" .) .Values.serviceAccount.name }}
+  {{- else }}
+  {{- default "default" .Values.serviceAccount.name }}
+  {{- end }}
+  {{- end }}
