@@ -1,100 +1,60 @@
-name: CI - Alert Simulator
+name: Build, Push & Update Helm Chart
 
 on:
   push:
     branches:
       - main
-      - develop
+      - master
     paths:
       - 'services/alert-simulator/**'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'services/alert-simulator/**'
+      - 'charts/alert-simulator/**'
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/alert-simulator
-
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+
     permissions:
-      contents: read
+      contents: write
       packages: write
 
+    env:
+      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/alert-simulator
+      IMAGE_TAG: ${{ github.sha }}
+      SHORT_TAG: ${{ github.sha }}
+
     steps:
-      - name: Checkout repository
+      - name: 1. Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: 2. Set image variables
+        run: |
+          echo "SHORT_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "IMAGE_REPO=ghcr.io/${{ github.repository_owner }}/alert-simulator" >> $GITHUB_ENV
 
-      - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+      - name: 3. Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
-        id: docker_build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/alert-simulator
-          file: ./services/alert-simulator/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: |
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-
-      - name: Print image digest
-        run: echo "Image digest: ${{ steps.docker_build.outputs.digest }}"
-
-  test:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: temurin
-          cache: maven
-
-      - name: Run Maven tests
+      - name: 4. Build and push image
         run: |
-          cd services/alert-simulator
-          mvn clean test
+          docker build -f services/alert-simulator/Dockerfile -t $IMAGE_REPO:$SHORT_TAG -t $IMAGE_REPO:latest services/alert-simulator
+          docker push $IMAGE_REPO:$SHORT_TAG
+          docker push $IMAGE_REPO:latest
 
-      - name: Run Maven verify
+      - name: 5. Update chart image tag in repo
         run: |
-          cd services/alert-simulator
-          mvn clean verify
+          sed -i "s|^  repository: .*|  repository: $IMAGE_REPO|g" charts/alert-simulator/values.yaml
+          sed -i "s|^  tag: .*|  tag: $SHORT_TAG|g" charts/alert-simulator/values.yaml
 
+      - name: 6. Commit and push chart update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/alert-simulator/values.yaml
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update alert-simulator chart to $SHORT_TAG"
+          git push origin HEAD
