@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/marafis/alert-simulator
-  tag: latest
+  tag: "18dec05"
   pullPolicy: IfNotPresent
 
 serviceAccount:
