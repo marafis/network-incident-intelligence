@@ -1,4 +1,4 @@
-name: Build, Push & Update Helm Chart
+name: Alert-simulator Build, Push & Update Helm Chart
 
 on:
   push:
