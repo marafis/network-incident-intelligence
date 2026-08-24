@@ -1,4 +1,4 @@
-name: Build, Push & Update Helm Chart
+name: Alert-Consumer Build, Push & Update Helm Chart
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
       - master
     paths:
-      - 'services/alert-simulator/**'
-      - 'charts/alert-simulator/**'
+      - 'services/alert-consumer/**'
+      - 'charts/alert-consumer/**'
   workflow_dispatch:
 
 jobs:
