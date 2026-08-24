@@ -18,19 +18,21 @@ jobs:
       contents: write
       packages: write
 
-    env:
-      IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/alert-simulator
-      IMAGE_TAG: ${{ github.sha }}
-      SHORT_TAG: ${{ github.sha }}
-
     steps:
       - name: 1. Checkout repo
         uses: actions/checkout@v4
+        with:
+          # Required to push changes back to the repository
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 2. Set image variables
         run: |
-          echo "SHORT_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "IMAGE_REPO=ghcr.io/${{ github.repository_owner }}/alert-simulator" >> $GITHUB_ENV
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          # Convert owner/repository to lowercase to avoid GHCR rejection
+          LOWER_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
+          echo "SHORT_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+          echo "IMAGE_REPO=ghcr.io/${LOWER_OWNER}/alert-simulator" >> $GITHUB_ENV
 
       - name: 3. Login to GHCR
         uses: docker/login-action@v3
@@ -41,20 +43,27 @@ jobs:
 
       - name: 4. Build and push image
         run: |
-          docker build -f services/alert-simulator/Dockerfile -t $IMAGE_REPO:$SHORT_TAG -t $IMAGE_REPO:latest services/alert-simulator
-          docker push $IMAGE_REPO:$SHORT_TAG
-          docker push $IMAGE_REPO:latest
+          docker build -f services/alert-simulator/Dockerfile -t ${IMAGE_REPO}:${SHORT_TAG} -t ${IMAGE_REPO}:latest services/alert-simulator
+          docker push ${IMAGE_REPO}:${SHORT_TAG}
+          docker push ${IMAGE_REPO}:latest
 
       - name: 5. Update chart image tag in repo
         run: |
-          sed -i "s|^  repository: .*|  repository: $IMAGE_REPO|g" charts/alert-simulator/values.yaml
-          sed -i "s|^  tag: .*|  tag: $SHORT_TAG|g" charts/alert-simulator/values.yaml
+          sed -i "s|^  repository: .*|  repository: ${IMAGE_REPO}|g" charts/alert-simulator/values.yaml
+          sed -i "s|^  tag: .*|  tag: \"${SHORT_TAG}\"|g" charts/alert-simulator/values.yaml
 
       - name: 6. Commit and push chart update
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add charts/alert-simulator/values.yaml
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update alert-simulator chart to $SHORT_TAG"
-          git push origin HEAD
+          
+          # Exit cleanly if values.yaml didn't change
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          # [skip ci] prevents triggering an infinite workflow loop
+          git commit -m "chore(helm): update alert-simulator image to ${SHORT_TAG} [skip ci]"
+          git push origin HEAD:${{ github.ref }}
