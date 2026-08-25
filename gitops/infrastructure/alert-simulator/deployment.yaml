@@ -20,8 +20,6 @@ spec:
         fsGroup: 1001
         seccompProfile:
           type: RuntimeDefault
-      nodeSelector:
-        "nii/role": services-plane
       containers:
         - name: alert-simulator
           image: ghcr.io/marafis/alert-simulator:99050fd
