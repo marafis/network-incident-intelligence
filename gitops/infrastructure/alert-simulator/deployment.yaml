@@ -24,7 +24,7 @@ spec:
         "nii/role": services-plane
       containers:
         - name: alert-simulator
-          image: ghcr.io/marafis/alert-simulator:18dec05
+          image: ghcr.io/marafis/alert-simulator:99050fd
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
