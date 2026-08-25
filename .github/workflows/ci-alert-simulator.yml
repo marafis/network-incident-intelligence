@@ -46,28 +46,26 @@ jobs:
       # =========================
       # 🟢 CD PHASE START (GitOps)
       # =========================
-      - name: 5. Checkout INFRA repo (CD)
-        uses: actions/checkout@v4
-        with:
-          repository: marafis/network-incident-intelligence
-          token: ${{ secrets.INFRA_TOKEN }}
-          path: network-incident-intelligence
-          # persist-credentials: true  ← this is the default; no need to reset remote
+      # -------------------------
+      # CD PHASE (GitOps) - update manifests in this repo
+      # We no longer checkout a separate infra repository. The GitOps manifests
+      # live in this repository under gitops/infrastructure/alert-simulator.
+      # -------------------------
 
-      - name: 6. Verify deployment file exists (CD)
+      - name: 5. Verify deployment file exists (CD)
         run: |
-          test -f network-incident-intelligence/charts/alert-consumer/templates/deployment.yaml
+          test -f gitops/infrastructure/alert-simulator/deployment.yaml
 
-      - name: 7. Update image in deployment file (CD)
+      - name: 6. Update image in deployment file (CD)
         run: |
-          sed -i "s|image: .*frontend:.*|image: $IMAGE_NAME:$TAG|g" network-incident-intelligence/charts/alert-consumer/templates/deployment.yaml
+          # Replace image tag in the plain manifest so ArgoCD will pick up the new image
+          sed -i "s|image: .*alert-simulator:.*|image: ${IMAGE_NAME}:${TAG}|g" gitops/infrastructure/alert-simulator/deployment.yaml
 
-      - name: 8. Commit and push infra changes (CD)
+      - name: 7. Commit and push manifest update (CD)
         run: |
-          cd marafis-infra
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add network-incident-intelligence/charts/alert-consumer/templates/deployment.yaml
+          git add gitops/infrastructure/alert-simulator/deployment.yaml
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: update frontend image to ${{ env.TAG }}"
+          git commit -m "chore: update alert-simulator image to ${TAG}"
           git push origin HEAD
