@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nii-alert-simulator-manifest
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+    description: "NII Alert Simulator (plain manifests) - GitOps application"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/marafis/network-incident-intelligence.git
+    targetRevision: main
+    path: gitops/infrastructure/alert-simulator
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nii
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
