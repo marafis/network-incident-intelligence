@@ -22,10 +22,41 @@ spec:
           type: RuntimeDefault
       containers:
         - name: alert-consumer
-          image: ghcr.io/marafis/alert-consumer:a57c507
+          image: ghcr.io/marafis/alert-consumer:98b5db2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
+          env:
+            # -------------------------------------------------
+            # PostgreSQL
+            # -------------------------------------------------
+            - name: DB_HOST
+              value: "nii-postgresql.nii.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "incident_db"
+            - name: DB_USER
+              value: "incident_db"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nii-postgresql-credentials
+                  key: incident-db-password
+              # Spring Boot datasource
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://nii-postgresql.nii.svc.cluster.local:5432/incident_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "incident_db"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nii-postgresql-credentials
+                  key: incident-db-password
+            - name: KAFKA_BROKERS
+              value: "kafka-cluster-kafka-bootstrap.nii.svc:9092"
+            - name: SPRING_CLOUD_STREAM_KAFKA_BINDER_BROKERS
+              value: "kafka-cluster-kafka-bootstrap.nii.svc:9092"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -53,4 +84,3 @@ spec:
               port: 8082
             initialDelaySeconds: 30
             periodSeconds: 10
-
