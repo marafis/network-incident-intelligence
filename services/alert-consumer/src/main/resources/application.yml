@@ -36,7 +36,7 @@ spring:
     show-sql: false
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:postgresql.nii.svc}:${DB_PORT:5432}/${DB_NAME:incident_db}
+    url: jdbc:postgresql://${DB_HOST:nii-postgresql.nii.svc}:${DB_PORT:5432}/${DB_NAME:incident_db}
     username: ${DB_USER:incident_db}
     password: ${DB_PASSWORD:Inc1d3nt@Db.Secure.2025}
     hikari:
