@@ -7,7 +7,7 @@ on:
       - master
     paths:
       - 'services/alert-consumer/**'
-      - '../../gitops/alert-consumer/**'
+      - 'gitops/alert-consumer/**'
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
 
       - name: 2. Set image variables
         run: |
-          echo "IMAGE=${{ github.repository_owner }}/alert-consumer" >> $GITHUB_ENV
+          echo "IMAGE=ghcr.io/${{ github.repository_owner }}/alert-consumer" >> $GITHUB_ENV
           echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: 3. Login to GHCR
@@ -69,4 +69,3 @@ jobs:
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update alert-consumer image to ${TAG}"
           git push origin HEAD
-
