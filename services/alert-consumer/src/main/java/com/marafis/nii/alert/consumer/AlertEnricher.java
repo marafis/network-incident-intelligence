@@ -1,127 +1,96 @@
 package com.marafis.nii.alert.consumer;
 
+import com.marafis.nii.alert.consumer.domain.EnrichmentProperties;
+import com.marafis.nii.alert.consumer.domain.NetworkAlert;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import com.marafis.nii.alert.consumer.domain.Incident;
 
-import java.util.HashMap;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Locale;
 import java.util.Map;
 
-/**
- * AlertEnricher - Enriches raw network alerts with context and metadata
- *
- * Performs:
- * - Component metadata lookup (from Phase 2 database)
- * - Composite severity score calculation
- * - Runbook reference assignment (for Phase 4 RAG)
- * - Deduplication checks (Phase 2+)
- */
 @Component
 @Slf4j
 public class AlertEnricher {
 
-    @Value("${consumer.enrichment.enabled:true}")
-    private boolean enrichmentEnabled;
-
-    @Value("${consumer.enrichment.lookup-metadata:true}")
-    private boolean lookupMetadata;
-
-    @Value("${consumer.enrichment.calculate-severity-score:true}")
-    private boolean calculateSeverity;
-
-    @Value("${consumer.enrichment.add-runbook-reference:true}")
-    private boolean addRunbookReference;
-
     private final ComponentMetadataService componentMetadataService;
+    private final EnrichmentProperties props;
 
-    public AlertEnricher(ComponentMetadataService componentMetadataService) {
+    public AlertEnricher(ComponentMetadataService componentMetadataService, EnrichmentProperties props) {
         this.componentMetadataService = componentMetadataService;
+        this.props = props;
     }
 
-    /**
-     * Enrich a raw network alert with metadata and context
-     *
-     * @param alert Raw NetworkAlert from Kafka
-     * @return EnrichedAlert with added metadata and scores
-     */
     public EnrichedAlert enrich(NetworkAlert alert) {
-        if (!enrichmentEnabled) {
-            log.warn("Enrichment disabled, returning minimal enrichment");
+        if (!props.enabled() || alert == null) {
+            log.debug("Enrichment disabled or alert null for {}", alert == null ? "<unknown>" : alert.getAlertId());
             return new EnrichedAlert(alert, null, calculateBaselineSeverityScore(alert), null);
         }
 
         try {
-            // 1. Lookup component metadata
-            Map<String, Object> componentMetadata = null;
-            if (lookupMetadata) {
-                componentMetadata = componentMetadataService.getComponentMetadata(alert.getComponentId());
-                log.debug("Component metadata found for {}: {}", alert.getComponentId(), componentMetadata);
-            }
+            Map<String, Object> metadata = props.lookupMetadata()
+                    ? componentMetadataService.getComponentMetadata(alert.getComponentId())
+                    : null;
 
-            // 2. Calculate composite severity score
-            int severityScore = 0;
-            if (calculateSeverity) {
-                severityScore = calculateSeverityScore(alert, componentMetadata);
-                log.debug("Calculated severity score: {} for alert {}", severityScore, alert.getAlertId());
-            }
+            Integer severityScore = props.calculateSeverity()
 
-            // 3. Add runbook reference (for Phase 4 RAG)
-            String runbookReference = null;
-            if (addRunbookReference) {
-                runbookReference = assignRunbookReference(alert, componentMetadata);
-                log.debug("Assigned runbook: {} for component {}", runbookReference, alert.getComponent());
-            }
+                    ? calculateSeverityScore(alert, metadata)
+                    : calculateBaselineSeverityScore(alert);
 
-            return new EnrichedAlert(alert, componentMetadata, severityScore, runbookReference);
+            String runbookReference = props.addRunbookReference()
+                    ? assignRunbookReference(alert, metadata)
+                    : null;
 
+            log.debug("Enriched alert {} with severity score {} and runbook {}",
+                    alert.getAlertId(), severityScore, runbookReference);
+            return new EnrichedAlert(alert, metadata, severityScore, runbookReference);
         } catch (Exception e) {
-            log.error("Error enriching alert {}", alert.getAlertId(), e);
-            // Fallback: return partially enriched
+            log.error("Failed to enrich alert {}. Falling back to partial enrichment.", alert.getAlertId(), e);
             return new EnrichedAlert(alert, null, calculateBaselineSeverityScore(alert), null);
         }
     }
 
-    /**
-     * Calculate composite severity score (0-100)
-     *
-     * Factors:
-     * - Base severity (CRITICAL=30, WARNING=20, INFO=10)
-     * - Component criticality (from metadata)
-     * - Region/SLA impact
-     * - Time-based escalation
-     */
-    private int calculateSeverityScore(NetworkAlert alert, Map<String, Object> metadata) {
+    public Integer calculateSeverityScore(NetworkAlert alert, Map<String, Object> metadata) {
+        if (alert == null) {
+            return 0;
+        }
+
         int score = calculateBaselineSeverityScore(alert);
 
-        // Component criticality multiplier
-        if (metadata != null) {
+        if (metadata != null && !metadata.isEmpty()) {
             String criticality = (String) metadata.getOrDefault("criticality", "LOW");
-            switch (criticality) {
-                case "CRITICAL" -> score += 30;
-                case "HIGH" -> score += 20;
-                case "MEDIUM" -> score += 10;
-                case "LOW" -> score += 0;
-            }
+            score += switch (criticality.toUpperCase(Locale.ROOT)) {
+                case "CRITICAL" -> 30;
+                case "HIGH" -> 20;
+                case "MEDIUM" -> 10;
+                default -> 0;
+            };
         }
 
-        // Region SLA impact
-        if (alert.getRegion() != null) {
-            if (alert.getRegion().startsWith("us-east")) {
-                score += 5;  // Primary region
-            } else if (alert.getRegion().startsWith("eu")) {
-                score += 3;  // Secondary region
-            }
+        String region = alert.getRegion() == null ? "" : alert.getRegion();
+        if (region.startsWith("us-east") || region.startsWith("us-west") || region.startsWith("us-")) {
+            score += 5;
+        } else if (region.startsWith("eu-")) {
+            score += 3;
+        } else if (region.startsWith("ap-")) {
+            score += 2;
         }
 
-        // Cap at 100
+        if (alert.getTimestamp() != null && Duration.between(alert.getTimestamp(), Instant.now()).toMinutes() > 10) {
+            score += 5;
+        }
+
         return Math.min(score, 100);
     }
 
-    /**
-     * Baseline severity score based on alert severity level
-     */
-    private int calculateBaselineSeverityScore(NetworkAlert alert) {
-        return switch (alert.getSeverity()) {
+    public Integer calculateBaselineSeverityScore(NetworkAlert alert) {
+        if (alert == null || alert.getSeverity() == null) {
+            return 5;
+        }
+
+        return switch (alert.getSeverity().toUpperCase(Locale.ROOT)) {
             case "CRITICAL" -> 30;
             case "WARNING" -> 20;
             case "INFO" -> 10;
@@ -129,77 +98,94 @@ public class AlertEnricher {
         };
     }
 
-    /**
-     * Assign runbook reference based on alert type and component
-     *
-     * In Phase 4, the incident-agent will use this to fetch detailed runbooks via RAG
-     * Format: "runbooks/<component>/<alert-type>"
-     */
-    private String assignRunbookReference(NetworkAlert alert, Map<String, Object> metadata) {
-        String component = alert.getComponent();
-        String alertMessage = alert.getMessage();
-
-        // Simple pattern matching for common alerts
-        String alertType = extractAlertType(alertMessage);
-
-        if (metadata != null && metadata.containsKey("runbook_id")) {
-            String runbookId = (String) metadata.get("runbook_id");
-            return String.format("runbooks/%s/%s", component, runbookId);
+    public String assignRunbookReference(NetworkAlert alert, Map<String, Object> metadata) {
+        if (alert == null) {
+            return null;
         }
 
-        // Fallback to generic runbook
-        return String.format("runbooks/network/%s", alertType.toLowerCase());
+        String component = alert.getComponentId() != null ? alert.getComponentId() : alert.getComponent();
+        String runbookId = metadata != null && metadata.get("runbook_id") != null
+                ? metadata.get("runbook_id").toString()
+                : extractAlertType(alert.getMessage());
+
+        if (component == null || component.isBlank()) {
+            return null;
+        }
+
+        return "runbooks/" + component + "/" + runbookId;
     }
 
-    /**
-     * Extract alert type from message for runbook matching
-     */
-    private String extractAlertType(String message) {
-        if (message == null) return "UNKNOWN";
+    public String extractAlertType(String message) {
+        if (message == null || message.isBlank()) {
+            return "GENERIC";
+        }
 
-        if (message.contains("CPU") || message.contains("cpu")) return "HIGH_CPU";
-        if (message.contains("Memory") || message.contains("memory")) return "HIGH_MEMORY";
-        if (message.contains("latency") || message.contains("Latency")) return "LATENCY";
-        if (message.contains("BGP") || message.contains("bgp")) return "BGP_FLAP";
-        if (message.contains("Interface") || message.contains("interface")) return "INTERFACE_ERROR";
-        if (message.contains("loss") || message.contains("Loss")) return "PACKET_LOSS";
-        if (message.contains("timeout") || message.contains("Timeout")) return "TIMEOUT";
-        if (message.contains("failure") || message.contains("Failure")) return "FAILURE";
-        if (message.contains("change") || message.contains("Change")) return "CONFIG_CHANGE";
-        if (message.contains("unreachable") || message.contains("Unreachable")) return "UNREACHABLE";
+        String normalized = message.toUpperCase(Locale.ROOT);
 
+        if (normalized.contains("CPU") || normalized.contains("UTILIZATION")) {
+            return "HIGH_CPU";
+        }
+        if (normalized.contains("MEMORY")) {
+            return "HIGH_MEMORY";
+        }
+        if (normalized.contains("LATENCY")) {
+            return "LATENCY";
+        }
+        if (normalized.contains("BGP")) {
+            return "BGP_FLAP";
+        }
+        if (normalized.contains("INTERFACE") || normalized.contains("ERROR")) {
+            return "INTERFACE_ERROR";
+        }
+        if (normalized.contains("LOSS")) {
+            return "PACKET_LOSS";
+        }
+        if (normalized.contains("TIMEOUT")) {
+            return "TIMEOUT";
+        }
+        if (normalized.contains("FAILURE")) {
+            return "FAILURE";
+        }
+        if (normalized.contains("CHANGE")) {
+            return "CONFIG_CHANGE";
+        }
+        if (normalized.contains("UNREACHABLE")) {
+            return "UNREACHABLE";
+        }
         return "GENERIC";
     }
-}
 
-/**
- * EnrichedAlert - Wrapper for raw alert with enrichment data
- */
-record EnrichedAlert(
-        NetworkAlert originalAlert,
-        Map<String, Object> componentMetadata,
-        Integer severityScore,
-        String runbookReference
-) {
-    public Incident toIncident() {
-        return Incident.builder()
-                .alertId(originalAlert.getAlertId())
-                .alertTimestamp(originalAlert.getTimestamp())
-                .severity(originalAlert.getSeverity())
-                .severityScore(severityScore)
-                .component(originalAlert.getComponent())
-                .componentId(originalAlert.getComponentId())
-                .region(originalAlert.getRegion())
-                .message(originalAlert.getMessage())
-                .source(originalAlert.getSource())
-                .deviceIp(originalAlert.getDeviceIp())
-                .service(originalAlert.getService())
-                .status("OPEN")
-                .correlationId(originalAlert.getCorrelationId())
-                .runbookReference(runbookReference)
-                .componentMetadata(componentMetadata != null ? componentMetadata.toString() : null)
-                .enriched(true)
-                .hasRunbook(runbookReference != null)
-                .build();
+    public record EnrichedAlert(
+            NetworkAlert originalAlert,
+            Map<String, Object> componentMetadata,
+            Integer severityScore,
+            String runbookReference
+    ) {
+        public Incident toIncident() {
+            if (originalAlert == null) {
+                return null;
+            }
+
+            return Incident.builder()
+                    .alertId(originalAlert.getAlertId())
+                    .alertTimestamp(originalAlert.getTimestamp())
+                    .severity(originalAlert.getSeverity())
+                    .severityScore(severityScore == null ? 0 : severityScore)
+                    .component(originalAlert.getComponent())
+                    .componentId(originalAlert.getComponentId())
+                    .region(originalAlert.getRegion())
+                    .message(originalAlert.getMessage())
+                    .source(originalAlert.getSource())
+                    .deviceIp(originalAlert.getDeviceIp())
+                    .service(originalAlert.getService())
+                    .status("OPEN")
+                    .correlationId(originalAlert.getCorrelationId())
+                    .runbookReference(runbookReference)
+                    .componentMetadata(componentMetadata != null ? componentMetadata.toString() : null)
+                    .enriched(true)
+                    .hasRunbook(runbookReference != null)
+                    .build();
+        }
     }
 }
+

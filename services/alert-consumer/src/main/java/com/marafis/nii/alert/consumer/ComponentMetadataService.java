@@ -6,28 +6,14 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * ComponentMetadataService - Provides component metadata for enrichment
- *
- * Phase 1: In-memory stub data
- * Phase 2: Will query PostgreSQL components table
- */
 @Service
 @Slf4j
 public class ComponentMetadataService {
 
-    /**
-     * Lookup component metadata by component ID
-     *
-     * Phase 1: Stub implementation with hardcoded data
-     * Phase 2: Query from incidents_db.components table
-     *
-     * @param componentId Component identifier (e.g., "router-01")
-     * @return Map of metadata or null if not found
-     */
     public Map<String, Object> getComponentMetadata(String componentId) {
-        // Phase 1: Hardcoded metadata (stub)
-        // In Phase 2, this will be replaced with JPA repository query
+        if (componentId == null || componentId.isBlank()) {
+            return null;
+        }
 
         return switch (componentId) {
             case "router-01" -> buildMetadata(
@@ -72,16 +58,7 @@ public class ComponentMetadataService {
         };
     }
 
-    /**
-     * Build component metadata map
-     */
-    private Map<String, Object> buildMetadata(
-            String name,
-            String criticality,
-            String region,
-            String runbookId,
-            String keywords
-    ) {
+    private Map<String, Object> buildMetadata(String name, String criticality, String region, String runbookId, String keywords) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("component_name", name);
         metadata.put("criticality", criticality);
@@ -89,7 +66,21 @@ public class ComponentMetadataService {
         metadata.put("runbook_id", runbookId);
         metadata.put("keywords", keywords);
         metadata.put("owner", "platform-team");
-        metadata.put("sla_response_minutes", criticality.equals("CRITICAL") ? 15 : 60);
+        metadata.put("sla_response_minutes", computeSlaResponseMinutes(criticality));
         return metadata;
     }
+
+    private int computeSlaResponseMinutes(String criticality) {
+        if ("CRITICAL".equalsIgnoreCase(criticality)) {
+            return 15;
+        }
+        if ("HIGH".equalsIgnoreCase(criticality)) {
+            return 60;
+        }
+        if ("MEDIUM".equalsIgnoreCase(criticality)) {
+            return 60;
+        }
+        return 120;
+    }
 }
+

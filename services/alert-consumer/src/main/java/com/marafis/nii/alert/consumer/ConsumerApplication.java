@@ -1,5 +1,7 @@
 package com.marafis.nii.alert.consumer;
 
+import com.marafis.nii.alert.consumer.domain.Incident;
+import com.marafis.nii.alert.consumer.domain.NetworkAlert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,55 +9,46 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
+
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-/**
- * Alert Consumer Service
- *
- * Consumes raw network alerts from Kafka 'network-alerts' topic,
- * enriches them with metadata and context, and persists to PostgreSQL
- * as incident records for further processing by the incident-agent (Phase 5).
- */
 @SpringBootApplication
 @Slf4j
 public class ConsumerApplication {
+
+    private static final AtomicLong ALERTS_PROCESSED = new AtomicLong(0);
 
     public static void main(String[] args) {
         SpringApplication.run(ConsumerApplication.class, args);
     }
 
-    /**
-     * Define the Kafka consumer function
-     * Spring Cloud Stream will bind this to 'network-alerts' topic
-     */
     @Bean
-    public Consumer<NetworkAlert> alertConsumer(AlertEnricher enricher, IncidentRepository incidentRepository) {
+    public Consumer<NetworkAlert> alertConsumer(AlertEnricher enricher, IncidentRepository repo) {
         return alert -> {
             try {
                 log.debug("Received alert from Kafka: {}", alert.getAlertId());
+                AlertEnricher.EnrichedAlert enriched = enricher.enrich(alert);
+                log.debug("Alert enriched: severity_score={}, runbook={}",
+                        enriched.severityScore(), enriched.runbookReference());
 
-                // Enrich the alert with metadata and context
-                EnrichedAlert enrichedAlert = enricher.enrich(alert);
-                log.debug("Alert enriched: severity_score={}", enrichedAlert.getSeverityScore());
-
-                // Convert to incident and persist
-                Incident incident = enrichedAlert.toIncident();
-                Incident saved = incidentRepository.save(incident);
-                log.info("Incident persisted: id={}, severity={}", saved.getId(), saved.getSeverity());
-
+                Incident incident = enriched.toIncident();
+                if (incident != null) {
+                    Incident saved = repo.save(incident);
+                    ALERTS_PROCESSED.incrementAndGet();
+                    log.info("Incident persisted: id={}, severity={}, alertId={}",
+                            saved.getId(), saved.getSeverity(), saved.getAlertId());
+                } else {
+                    log.warn("Alert {} could not be converted to an Incident record.", alert.getAlertId());
+                }
             } catch (Exception e) {
                 log.error("Error processing alert: {}", alert.getAlertId(), e);
-                // In production: route to dead-letter queue
+                // Route to dead-letter queue in Phase 2.
             }
         };
     }
 
-    /**
-     * REST Controller for consumer health and statistics
-     */
     @RestController
     public static class ConsumerController {
 
@@ -66,36 +59,27 @@ public class ConsumerApplication {
             this.incidentRepository = incidentRepository;
         }
 
-        /**
-         * Health check endpoint
-         */
         @GetMapping("/health/consumer")
         public Map<String, Object> health() {
-            long totalIncidents = incidentRepository.count();
             return Map.of(
                     "status", "UP",
                     "service", "alert-consumer",
-                    "alerts_processed", alertsProcessed.get(),
-                    "total_incidents_in_db", totalIncidents
+                    "alerts_processed", ALERTS_PROCESSED.get(),
+                    "total_incidents_in_db", incidentRepository.count()
             );
         }
 
-        /**
-         * Get consumer statistics
-         */
         @GetMapping("/api/v1/consumer/stats")
-        public Map<String, Object> getStats() {
+        public Map<String, Object> stats() {
             return Map.of(
-                    "alerts_processed", alertsProcessed.get(),
+                    "alerts_processed", ALERTS_PROCESSED.get(),
                     "incidents_stored", incidentRepository.count()
             );
         }
 
-        /**
-         * Increment counter (called by consumer function)
-         */
-        public void incrementCounter() {
-            alertsProcessed.incrementAndGet();
+        public long getAlertCount() {
+            return alertsProcessed.get();
         }
     }
 }
+
