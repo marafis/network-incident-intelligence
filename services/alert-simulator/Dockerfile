@@ -17,11 +17,13 @@ LABEL maintainer="NII Platform Team" \
       description="NII Alert Simulator - Generates synthetic network alerts" \
       version="1.0.0"
 
-RUN addgroup -g 1001 appuser && adduser -D -u 1001 -G appuser appuser
+RUN groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid 1001 --create-home --shell /bin/bash appuser
 
 WORKDIR /app
 
 COPY --from=builder /build/target/alert-simulator-*.jar app.jar
+
 RUN chown -R appuser:appuser /app
 
 USER appuser
@@ -29,11 +31,13 @@ USER appuser
 EXPOSE 8081 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health/simulator || exit 1
+  CMD wget --no-verbose --tries=1 --spider \
+      http://localhost:8081/health/simulator || exit 1
 
 ENV JAVA_OPTS="-XX:MaxGCPauseMillis=200 \
 -XX:InitiatingHeapOccupancyPercent=35 \
 -XX:+UseStringDeduplication \
 -XX:+ExitOnOutOfMemoryError \
 -Dspring.profiles.active=production"
+
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
