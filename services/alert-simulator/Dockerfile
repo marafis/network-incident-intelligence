@@ -31,6 +31,9 @@ EXPOSE 8081 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8081/health/simulator || exit 1
 
-ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+ParallelRefProcEnabled -XX:+UnlockDiagnosticVMOptions -XX:G1NewCollectionHeuristicPercent=35 -XX:InitiatingHeapOccupancyPercent=35 -XX:+UseStringDeduplication -XX:+ExitOnOutOfMemoryError -Dspring.profiles.active=production"
-
+ENV JAVA_OPTS="-XX:MaxGCPauseMillis=200 \
+-XX:InitiatingHeapOccupancyPercent=35 \
+-XX:+UseStringDeduplication \
+-XX:+ExitOnOutOfMemoryError \
+-Dspring.profiles.active=production"
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
