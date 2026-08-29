@@ -7,7 +7,7 @@ spring:
     stream:
       kafka:
         binder:
-          brokers: ${KAFKA_BROKERS:kafka-bootstrap.nii.svc:9092}
+          brokers: ${KAFKA_BROKERS:kafka-cluster-kafka-bootstrap.nii.svc:9092}
           configuration:
             security.protocol: PLAINTEXT
             # Batch settings for high throughput

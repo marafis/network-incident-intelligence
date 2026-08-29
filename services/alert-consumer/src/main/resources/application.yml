@@ -7,9 +7,12 @@ spring:
     stream:
       kafka:
         binder:
-          brokers: ${KAFKA_BROKERS:kafka-bootstrap.nii.svc:9092}
+          brokers: ${KAFKA_BROKERS:kafka-cluster-kafka-bootstrap.nii.svc:9092}
           configuration:
             security.protocol: PLAINTEXT
+            auto.offset.reset: earliest
+            enable.auto.commit: false
+            max.poll.records: 100
             # Consumer group for load balancing
             group.id: alert-consumer-group
             # Auto-commit offset
