@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: alert-simulator
-          image: ghcr.io/marafis/alert-simulator:ea5fa9f
+          image: ghcr.io/marafis/alert-simulator:c950d15
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
