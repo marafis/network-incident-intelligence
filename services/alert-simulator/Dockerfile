@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # --- Runtime stage --------------------------------------------------------
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 
 LABEL maintainer="NII Platform Team" \
       description="NII Alert Simulator - Generates synthetic network alerts" \
