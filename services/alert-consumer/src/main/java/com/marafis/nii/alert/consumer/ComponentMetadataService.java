@@ -83,4 +83,3 @@ public class ComponentMetadataService {
         return 120;
     }
 }
-
