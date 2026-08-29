@@ -1,4 +1,4 @@
-name: Build, Test & Publish Alert-Consumer
+name: Alert-Consumer Build, Push & Update Helm Chart
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - master
     paths:
       - 'services/alert-consumer/**'
+      - '../../gitops/alert-consumer/**'
   workflow_dispatch:
 
 jobs:
