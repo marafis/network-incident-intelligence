@@ -22,7 +22,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: alert-consumer
-          image: ghcr.io/marafis/alert-consumer:98b5db2
+          image: ghcr.io/marafis/alert-consumer:e4bdc6c
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
